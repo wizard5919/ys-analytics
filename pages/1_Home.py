@@ -1,29 +1,18 @@
 import streamlit as st
-from PIL import Image
-import requests
-from io import BytesIO
 
 # Use GitHub raw URL for logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Try to load logo from GitHub
-try:
-    response = requests.get(LOGO_URL)
-    logo = Image.open(BytesIO(response.content))
-    has_logo = True
-except Exception as e:
-    st.warning(f"Logo not loaded: {str(e)}")
-    has_logo = False
-
 # Page header
-if has_logo:
+try:
     col1, col2 = st.columns([1, 3])
     with col1:
-        st.image(logo, width=150)  # Increased width for better visibility
+        st.image(LOGO_URL, width=150)  # Streamlit handles the download automatically
     with col2:
         st.title("YS Analytics")
         st.markdown("**Data-Driven Market Intelligence**")
-else:
+except Exception as e:
+    st.warning(f"Logo not loaded: {str(e)}")
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
 
@@ -89,6 +78,7 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
 
 
 
