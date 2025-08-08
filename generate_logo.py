@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw, ImageFont
-import matplotlib.pyplot as plt
 import os
 
 # Create a blank image with dark blue background
