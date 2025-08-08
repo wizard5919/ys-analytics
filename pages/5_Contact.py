@@ -1,4 +1,4 @@
-cat > pages/5_Contact.py << 'EOL'
+
 import streamlit as st
 
 st.title("Contact YS Analytics")
@@ -50,4 +50,5 @@ st.map(pd.DataFrame({'lat': [40.7128], 'lon': [-74.0060]}), zoom=12)
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
-EOL
+
+
