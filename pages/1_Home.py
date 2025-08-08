@@ -1,20 +1,50 @@
 import streamlit as st
+import os
+from PIL import Image
 
-# Use GitHub raw URL for logo
-LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
+# Check environment (local vs cloud)
+is_cloud = os.path.exists('/mount/src/ys-analytics')
+
+# Try to load logo
+try:
+    if is_cloud:
+        # Streamlit Cloud path
+        logo_path = '/mount/src/ys-analytics/assets/logo.png'
+    else:
+        # Local path
+        logo_path = 'assets/logo.png'
+    
+    logo = Image.open(logo_path)
+    has_logo = True
+except Exception as e:
+    # Fallback to GitHub URL
+    try:
+        logo_url = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
+        has_logo = True
+    except:
+        st.warning("Logo could not be loaded. Please check the file path.")
+        has_logo = False
 
 # Page header
-try:
+if has_logo:
     col1, col2 = st.columns([1, 3])
     with col1:
-        st.image(LOGO_URL, width=150)  # Streamlit handles the download automatically
+        # Use different method based on source
+        if 'logo_url' in locals():
+            st.image(logo_url, width=150)
+        else:
+            st.image(logo, width=150)
     with col2:
         st.title("YS Analytics")
         st.markdown("**Data-Driven Market Intelligence**")
-except Exception as e:
-    st.warning(f"Logo not loaded: {str(e)}")
-    st.title("YS Analytics")
-    st.markdown("**Data-Driven Market Intelligence**")
+else:
+    # Text-based fallback
+    st.markdown("""
+    <div style="background-color:#0A1F44; padding:20px; border-radius:12px; margin-bottom:20px">
+        <h1 style="color:white; margin:0">YS Analytics</h1>
+        <p style="color:#00C2FF; margin:0">Data-Driven Market Intelligence</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Mission statement
 st.markdown("""
@@ -78,6 +108,7 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
 
 
 
