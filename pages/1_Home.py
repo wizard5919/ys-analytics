@@ -31,9 +31,9 @@ if has_logo:
     with col1:
         # Use different method based on source
         if 'logo_url' in locals():
-            st.image(logo_url, width=150)
+            st.image(logo_url, use_column_width=True)  # Fits to column for better quality
         else:
-            st.image(logo, width=150)
+            st.image(logo, use_column_width=True)  # Fits to column for better quality
     with col2:
         st.title("YS Analytics")
         st.markdown("**Data-Driven Market Intelligence**")
@@ -108,3 +108,4 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
