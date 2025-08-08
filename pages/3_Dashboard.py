@@ -30,9 +30,11 @@ with tabs[0]:
         )
     
     # Get stock data
-    data = yf.download(ticker, period=period)
-    
+    data = yf.download(ticker, period=period, auto_adjust=False)  # Explicitly set to avoid warning; change to True if adjusted close is preferred
     if not data.empty:
+        # Flatten multi-index columns (removes ticker level for single-symbol queries)
+        data.columns = data.columns.droplevel(1)
+        
         # Create a DataFrame that Plotly can handle
         plot_data = data.reset_index()
         plot_data = plot_data.rename(columns={'Date': 'date', 'Close': 'close'})
@@ -81,6 +83,3 @@ with tabs[3]:
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
-
-
-
