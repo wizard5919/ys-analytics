@@ -1,4 +1,4 @@
-cat > pages/3_Dashboard.py << 'EOL'
+
 import streamlit as st
 import yfinance as yf
 import plotly.express as px
@@ -75,4 +75,5 @@ with tabs[3]:
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
-EOL
+
+
