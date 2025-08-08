@@ -9,4 +9,6 @@ prophet
 python-dotenv
 pillow
 requests
+ta
+
 
