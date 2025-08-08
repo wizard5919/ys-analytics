@@ -10,5 +10,12 @@ python-dotenv
 pillow
 requests
 ta
+polygon-api-client
+streamlit-autorefresh
+scipy
+aiohttp
+nest_asyncio
+streamlit-authenticator
+playwright
 
 
