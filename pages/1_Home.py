@@ -31,9 +31,9 @@ if has_logo:
     with col1:
         # Use different method based on source
         if 'logo_url' in locals():
-            st.image(logo_url, width=150)
+            st.image(logo_url, use_container_width=True)
         else:
-            st.image(logo, width=150)
+            st.image(logo, use_container_width=True)
     with col2:
         st.title("YS Analytics")
         st.markdown("**Data-Driven Market Intelligence**")
