@@ -46,7 +46,7 @@ with col2:
 # Map placeholder
 st.markdown("---")
 st.subheader("Our Location")
-st.map(pd.DataFrame({'lat': [40.7128], 'lon': [-74.0060]}), zoom=12)
+st.map(pd.DataFrame({'lat': [33.7537], 'lon': [-84.3863]}), zoom=12)
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
