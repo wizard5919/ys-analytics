@@ -1,4 +1,4 @@
-cat > README.md << 'EOL'
+
 # 🚀 YS Analytics - Financial Analytics Platform
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ys-analytics.streamlit.app/)
@@ -22,9 +22,4 @@ cat > README.md << 'EOL'
 - Prophet
 - yfinance
 
-## Setup
-```bash
-git clone https://github.com/wizard5919/ys-analytics.git
-cd ys-analytics
-pip install -r requirements.txt
-streamlit run app.py
+
