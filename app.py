@@ -1,4 +1,4 @@
-cat > app.py << 'EOL'
+
 import streamlit as st
 
 # Global page configuration
@@ -62,4 +62,5 @@ h1, h2, h3, h4 {
 
 # Route to home page
 st.switch_page("pages/1_Home.py")
-EOL
+
+
