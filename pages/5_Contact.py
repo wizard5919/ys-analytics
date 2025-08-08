@@ -1,5 +1,5 @@
-
 import streamlit as st
+import pandas as pd
 
 st.title("Contact YS Analytics")
 st.markdown("Get in touch for consulting, collaboration, or inquiries")
@@ -50,5 +50,3 @@ st.map(pd.DataFrame({'lat': [40.7128], 'lon': [-74.0060]}), zoom=12)
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
-
-
