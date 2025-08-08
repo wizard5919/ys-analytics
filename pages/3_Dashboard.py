@@ -1,4 +1,3 @@
-
 import streamlit as st
 import yfinance as yf
 import plotly.express as px
@@ -34,17 +33,24 @@ with tabs[0]:
     data = yf.download(ticker, period=period)
     
     if not data.empty:
+        # Create a DataFrame that Plotly can handle
+        plot_data = data.reset_index()
+        plot_data = plot_data.rename(columns={'Date': 'date', 'Close': 'close'})
+        
         # Price chart
-        fig = px.line(data, x=data.index, y="Close", title=f"{ticker} Price History")
+        fig = px.line(plot_data, x='date', y='close', title=f"{ticker} Price History")
         st.plotly_chart(fig, use_container_width=True)
         
         # Metrics
-        delta = data['Close'].iloc[-1] - data['Close'].iloc[-2]
-        st.metric(
-            label="Current Price", 
-            value=f"${data['Close'].iloc[-1]:.2f}", 
-            delta=f"{delta:.2f} ({delta/data['Close'].iloc[-2]*100:.2f}%)"
-        )
+        if len(data) > 1:
+            delta = data['Close'].iloc[-1] - data['Close'].iloc[-2]
+            st.metric(
+                label="Current Price", 
+                value=f"${data['Close'].iloc[-1]:.2f}", 
+                delta=f"{delta:.2f} ({delta/data['Close'].iloc[-2]*100:.2f}%)"
+            )
+        else:
+            st.metric(label="Current Price", value=f"${data['Close'].iloc[-1]:.2f}")
     else:
         st.warning("No data available for selected ticker")
 
@@ -75,5 +81,6 @@ with tabs[3]:
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+
 
 
