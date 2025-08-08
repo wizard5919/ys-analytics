@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 st.title("Project Portfolio")
@@ -20,12 +19,13 @@ with st.expander("Options Analytics Suite", expanded=True):
             <li>Profit/loss probability distributions</li>
         </ul>
         <p><strong>Technologies:</strong> Python, QuantLib, Streamlit, Plotly</p>
-        <div style="display: flex; gap: 10px;">
-            <button style="flex: 1;">View Live Demo</button>
-            <button style="flex: 1;">GitHub Repository</button>
-        </div>
     </div>
     """, unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.page_link("pages/6_Options_Analyzer.py", label="View Live Demo")
+    with col2:
+        st.link_button("GitHub Repository", "https://github.com/wizard5919/ys-analytics/tree/main/pages/6_Options_Analyzer.py")
 
 # Project 2
 with st.expander("Market Sector Classifier"):
@@ -69,5 +69,3 @@ with st.expander("Macroeconomic Dashboard"):
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
-
-
