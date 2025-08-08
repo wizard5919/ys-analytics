@@ -16,11 +16,7 @@ with tabs[0]:
     col1, col2 = st.columns(2)
     
     with col1:
-        ticker = st.selectbox(
-            "Select Ticker", 
-            ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "SPY", "QQQ"],
-            index=0
-        )
+        ticker = st.text_input("Enter Ticker", value="AAPL", max_chars=5).upper()
         
     with col2:
         period = st.selectbox(
