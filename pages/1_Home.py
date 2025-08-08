@@ -1,20 +1,20 @@
-
 import streamlit as st
 from PIL import Image
 import os
 
-# Try to load logo
+# Load logo - now using your actual logo
 try:
-    logo = Image.open('assets/logo.png')
+    logo = Image.open('assets/logo.png')  # Make sure it's named logo.png
     has_logo = True
-except:
+except Exception as e:
+    st.error(f"Error loading logo: {e}")
     has_logo = False
 
 # Page header
 if has_logo:
     col1, col2 = st.columns([1, 3])
     with col1:
-        st.image(logo, width=120)
+        st.image(logo, width=150)  # Increased width for better visibility
     with col2:
         st.title("YS Analytics")
         st.markdown("**Data-Driven Market Intelligence**")
@@ -84,5 +84,6 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
 
 
