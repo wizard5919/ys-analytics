@@ -1,10 +1,9 @@
-
 import streamlit as st
 
 # Global page configuration
 st.set_page_config(
     page_title="YS Analytics | Data-Driven Market Intelligence",
-    page_icon="📊",
+    page_icon="assets/logo.png",
     layout="centered",
     initial_sidebar_state="collapsed",
     menu_items={
@@ -62,5 +61,3 @@ h1, h2, h3, h4 {
 
 # Route to home page
 st.switch_page("pages/1_Home.py")
-
-
