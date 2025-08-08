@@ -1,13 +1,18 @@
 import streamlit as st
 from PIL import Image
-import os
+import requests
+from io import BytesIO
 
-# Load logo - now using your actual logo
+# Use GitHub raw URL for logo
+LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
+
+# Try to load logo from GitHub
 try:
-    logo = Image.open('assets/logo.png')  # Make sure it's named logo.png
+    response = requests.get(LOGO_URL)
+    logo = Image.open(BytesIO(response.content))
     has_logo = True
 except Exception as e:
-    st.error(f"Error loading logo: {e}")
+    st.warning(f"Logo not loaded: {str(e)}")
     has_logo = False
 
 # Page header
@@ -84,6 +89,7 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
 
 
 
