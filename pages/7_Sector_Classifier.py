@@ -62,13 +62,21 @@ with st.spinner("Fetching stock data..."):
                 st.warning(f"No valid returns for {stock}, skipping...")
                 continue
                 
-            # Calculate features
+            # Calculate features and ensure they are scalars
             mean_return = returns.mean()
             std_return = returns.std()
             volume_mean = df['Volume'].mean()
             
+            # Convert to scalars if needed
+            if isinstance(mean_return, pd.Series):
+                mean_return = mean_return.iloc[0]
+            if isinstance(std_return, pd.Series):
+                std_return = std_return.iloc[0]
+            if isinstance(volume_mean, pd.Series):
+                volume_mean = volume_mean.iloc[0]
+            
             # Skip if features are NaN
-            if np.isnan(mean_return) or np.isnan(std_return) or np.isnan(volume_mean):
+            if (pd.isna(mean_return) or pd.isna(std_return) or pd.isna(volume_mean)):
                 st.warning(f"Invalid features for {stock}, skipping...")
                 continue
                 
@@ -85,7 +93,7 @@ with st.spinner("Fetching stock data..."):
             
         except Exception as e:
             st.error(f"Error processing {stock}: {str(e)}")
-            st.error(traceback.format_exc())
+            st.text(traceback.format_exc())  # Show full traceback for debugging
 
 if not data:
     st.error("Failed to fetch data for any stocks. Please check your internet connection or try again later.")
@@ -162,11 +170,20 @@ if new_ticker:
                 if returns.empty:
                     st.warning(f"No valid returns for {new_ticker}")
                 else:
+                    # Calculate features and ensure they are scalars
                     mean_return = returns.mean()
                     std_return = returns.std()
                     volume_mean = new_df['Volume'].mean()
                     
-                    if np.isnan(mean_return) or np.isnan(std_return) or np.isnan(volume_mean):
+                    # Convert to scalars if needed
+                    if isinstance(mean_return, pd.Series):
+                        mean_return = mean_return.iloc[0]
+                    if isinstance(std_return, pd.Series):
+                        std_return = std_return.iloc[0]
+                    if isinstance(volume_mean, pd.Series):
+                        volume_mean = volume_mean.iloc[0]
+                    
+                    if (pd.isna(mean_return) or pd.isna(std_return) or pd.isna(volume_mean)):
                         st.warning(f"Invalid features for {new_ticker}")
                     else:
                         new_features = {
