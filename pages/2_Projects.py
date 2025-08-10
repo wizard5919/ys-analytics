@@ -1,47 +1,12 @@
 import streamlit as st
-from streamlit.components.v1 import html
 
-# Create anchor targets
-st.markdown("""
-<style>
-.anchor-target {
-    position: relative;
-    top: -100px;  /* Offset for fixed header */
-    visibility: hidden;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Navigation handler
-def scroll_to_project(project_id):
-    js = f"""
-    <script>
-        var target = document.querySelector("#{project_id}");
-        if (target) {{
-            window.scrollTo({{
-                top: target.offsetTop - 100,
-                behavior: 'smooth'
-            }});
-        }}
-    </script>
-    """
-    html(js)
-
-# Check if we need to scroll to a specific project
-if "navigate_to" in st.session_state:
-    project_id = st.session_state["navigate_to"]
-    del st.session_state["navigate_to"]
-    scroll_to_project(project_id)
-
-# Main content
 st.title("Project Portfolio")
 st.markdown("""
 Explore our financial analytics projects demonstrating expertise in market analysis, 
 predictive modeling, and data visualization.
 """)
 
-# Project 1 - Options Analytics Suite
-st.markdown('<div id="options" class="anchor-target"></div>', unsafe_allow_html=True)
+# Project 1
 with st.expander("Options Analytics Suite", expanded=True):
     st.markdown("""
     <div class="card">
@@ -55,15 +20,14 @@ with st.expander("Options Analytics Suite", expanded=True):
             <li>Strategy backtesting capabilities</li>
         </ul>
         <p><strong>Technologies:</strong> Python, QuantLib, Streamlit, Plotly</p>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <a href="pages/3_Dashboard.py" class="btn">View Live Demo</a>
-            <a href="https://github.com/wizard5919" class="btn">GitHub Repository</a>
+        <div style="display: flex; gap: 10px;">
+            <a href="pages/6_Options_Analyzer.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Live Demo</a>
+            <a href="https://github.com/wizard5919/options_analyzerPublic" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">GitHub Repository</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# Project 2 - Market Sector Classifier
-st.markdown('<div id="sector" class="anchor-target"></div>', unsafe_allow_html=True)
+# Project 2
 with st.expander("Market Sector Classifier"):
     st.markdown("""
     <div class="card">
@@ -77,15 +41,14 @@ with st.expander("Market Sector Classifier"):
             <li>Provides visual analytics of sector rotation patterns</li>
         </ul>
         <p><strong>Technologies:</strong> Python, Scikit-learn, TA-Lib, Plotly</p>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <a href="pages/3_Dashboard.py" class="btn">View Case Study</a>
-            <a href="#" class="btn">Research Paper</a>
+        <div style="display: flex; gap: 10px;">
+            <a href="pages/7_Sector_Classifier.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Case Study</a>
+            <a href="https://example.com/research-paper.pdf" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Research Paper</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# Project 3 - Macroeconomic Dashboard
-st.markdown('<div id="macro" class="anchor-target"></div>', unsafe_allow_html=True)
+# Project 3
 with st.expander("Macroeconomic Dashboard"):
     st.markdown("""
     <div class="card">
@@ -99,39 +62,12 @@ with st.expander("Macroeconomic Dashboard"):
             <li>Compares economic performance across regions</li>
         </ul>
         <p><strong>Technologies:</strong> Python, FRED API, Prophet, Altair</p>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <a href="pages/3_Dashboard.py" class="btn">Explore Dashboard</a>
-            <a href="#" class="btn">Methodology</a>
+        <div style="display: flex; gap: 10px;">
+            <a href="pages/8_Macro_Dashboard.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Explore Dashboard</a>
+            <a href="pages/9_Methodology.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Methodology</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# Navigation back to home
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
-
-# Button styles
-st.markdown("""
-<style>
-.btn {
-    background-color: #00C2FF;
-    color: #0A1F44;
-    border: none;
-    padding: 8px 16px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.btn:hover {
-    background-color: #0A1F44;
-    color: #00C2FF;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 194, 255, 0.3);
-}
-</style>
-""", unsafe_allow_html=True)
