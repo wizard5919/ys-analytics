@@ -9,6 +9,7 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import traceback
 
 st.title("Market Sector Classifier Demo")
 st.markdown("ML pipeline that processes historical price data from global markets, extracts technical indicators as features, trains Random Forest classifier for sector prediction, and provides visual analytics of sector rotation patterns.")
@@ -42,23 +43,40 @@ with st.spinner("Fetching stock data..."):
             start_date = end_date - timedelta(days=365)
             df = yf.download(stock, start=start_date, end=end_date, progress=False)
             
-            if df.empty or len(df) < 10:
-                st.warning(f"Insufficient data for {stock} (only {len(df)} rows), skipping...")
+            # Properly check if DataFrame is empty
+            if df is None or df.empty:
+                st.warning(f"No data available for {stock}, skipping...")
                 continue
                 
-            # Calculate features - skip first row with NaN from pct_change
-            returns = df['Close'].pct_change().dropna()
+            # Check length properly
+            if len(df) < 10:
+                st.warning(f"Insufficient data points for {stock} (only {len(df)} rows), skipping...")
+                continue
+                
+            # Calculate features
+            df['Return'] = df['Close'].pct_change()
+            returns = df['Return'].dropna()
             
-            # Ensure we have valid values
-            if returns.empty or np.isnan(returns).all():
+            # Check for valid returns
+            if returns.empty:
                 st.warning(f"No valid returns for {stock}, skipping...")
+                continue
+                
+            # Calculate features
+            mean_return = returns.mean()
+            std_return = returns.std()
+            volume_mean = df['Volume'].mean()
+            
+            # Skip if features are NaN
+            if np.isnan(mean_return) or np.isnan(std_return) or np.isnan(volume_mean):
+                st.warning(f"Invalid features for {stock}, skipping...")
                 continue
                 
             features = {
                 'stock': stock,
-                'mean_return': returns.mean(),
-                'std_return': returns.std(),
-                'volume_mean': df['Volume'].mean()
+                'mean_return': mean_return,
+                'std_return': std_return,
+                'volume_mean': volume_mean
             }
             features['sector'] = stock_sector_map[stock]
             data.append(features)
@@ -67,6 +85,7 @@ with st.spinner("Fetching stock data..."):
             
         except Exception as e:
             st.error(f"Error processing {stock}: {str(e)}")
+            st.error(traceback.format_exc())
 
 if not data:
     st.error("Failed to fetch data for any stocks. Please check your internet connection or try again later.")
@@ -130,29 +149,40 @@ if new_ticker:
             start_date = end_date - timedelta(days=365)
             new_df = yf.download(new_ticker, start=start_date, end=end_date, progress=False)
             
-            if new_df.empty or len(new_df) < 10:
-                st.warning(f"Insufficient data for {new_ticker} (only {len(new_df)} rows)")
+            # Properly check if DataFrame is empty
+            if new_df is None or new_df.empty:
+                st.warning(f"No data available for {new_ticker}")
+            elif len(new_df) < 10:
+                st.warning(f"Insufficient data points for {new_ticker} (only {len(new_df)} rows)")
             else:
                 # Calculate features
-                returns = new_df['Close'].pct_change().dropna()
+                new_df['Return'] = new_df['Close'].pct_change()
+                returns = new_df['Return'].dropna()
                 
-                if returns.empty or np.isnan(returns).all():
+                if returns.empty:
                     st.warning(f"No valid returns for {new_ticker}")
                 else:
-                    new_features = {
-                        'mean_return': returns.mean(),
-                        'std_return': returns.std(),
-                        'volume_mean': new_df['Volume'].mean()
-                    }
-                    new_X = pd.DataFrame([new_features])
+                    mean_return = returns.mean()
+                    std_return = returns.std()
+                    volume_mean = new_df['Volume'].mean()
                     
-                    # Predict and display
-                    pred_sector = clf.predict(new_X)[0]
-                    st.success(f"Predicted sector for {new_ticker}: **{pred_sector}**")
-                    
-                    # Show feature values
-                    st.write("Feature Values:")
-                    st.dataframe(new_X)
+                    if np.isnan(mean_return) or np.isnan(std_return) or np.isnan(volume_mean):
+                        st.warning(f"Invalid features for {new_ticker}")
+                    else:
+                        new_features = {
+                            'mean_return': mean_return,
+                            'std_return': std_return,
+                            'volume_mean': volume_mean
+                        }
+                        new_X = pd.DataFrame([new_features])
+                        
+                        # Predict and display
+                        pred_sector = clf.predict(new_X)[0]
+                        st.success(f"Predicted sector for {new_ticker}: **{pred_sector}**")
+                        
+                        # Show feature values
+                        st.write("Feature Values:")
+                        st.dataframe(new_X)
     except Exception as e:
         st.error(f"Error processing {new_ticker}: {str(e)}")
 
