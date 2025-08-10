@@ -11,9 +11,11 @@ import matplotlib.pyplot as plt
 st.title("Market Sector Classifier Demo")
 st.markdown("ML pipeline that processes historical price data from global markets, extracts technical indicators as features, trains Random Forest classifier for sector prediction, and provides visual analytics of sector rotation patterns.")
 
-# Sample stocks and sectors
-stocks = ['AAPL', 'MSFT', 'GOOGL', 'JPM', 'BAC', 'WFC', 'XOM', 'CVX', 'SLB']
-sectors = ['Tech', 'Tech', 'Tech', 'Finance', 'Finance', 'Finance', 'Energy', 'Energy', 'Energy']
+# Sample stocks and sectors - increased to 18 for better split
+stocks = ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'AMD', 'INTC', 'ORCL', 'IBM', 'CSCO',
+          'JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'AXP', 'BLK', 'SCHW']
+sectors = ['Tech', 'Tech', 'Tech', 'Tech', 'Tech', 'Tech', 'Tech', 'Tech', 'Tech',
+           'Finance', 'Finance', 'Finance', 'Finance', 'Finance', 'Finance', 'Finance', 'Finance', 'Finance']
 
 # Fetch data
 data = []
@@ -31,36 +33,39 @@ for stock in stocks:
     data.append(features)
 
 df_features = pd.DataFrame(data)
-df_features['sector'] = sectors
+df_features['sector'] = sectors[:len(df_features)]  # Match length
 
-# Convert to numeric, handle NaN
-df_features['mean_return'] = pd.to_numeric(df_features['mean_return'], errors='coerce')
-df_features['std_return'] = pd.to_numeric(df_features['std_return'], errors='coerce')
-df_features['volume_mean'] = pd.to_numeric(df_features['volume_mean'], errors='coerce')
+if df_features.empty:
+    st.warning("No data fetched for stocks.")
+else:
+    # Convert to numeric, handle NaN
+    df_features['mean_return'] = pd.to_numeric(df_features['mean_return'], errors='coerce')
+    df_features['std_return'] = pd.to_numeric(df_features['std_return'], errors='coerce')
+    df_features['volume_mean'] = pd.to_numeric(df_features['volume_mean'], errors='coerce')
 
-# Drop rows with NaN
-df_features = df_features.dropna()
+    # Drop rows with NaN
+    df_features = df_features.dropna()
 
-# Train model
-X = df_features[['mean_return', 'std_return', 'volume_mean']]
-y = df_features['sector']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Train model
+    X = df_features[['mean_return', 'std_return', 'volume_mean']]
+    y = df_features['sector']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)  # test_size=0.3
 
-clf = RandomForestClassifier(random_state=42)
-clf.fit(X_train, y_train)
+    clf = RandomForestClassifier(random_state=42)
+    clf.fit(X_train, y_train)
 
-# Test
-pred = clf.predict(X_test)
-acc = accuracy_score(y_test, pred)
-st.metric("Model Accuracy", f"{acc*100:.2f}%")
+    # Test
+    pred = clf.predict(X_test)
+    acc = accuracy_score(y_test, pred)
+    st.metric("Model Accuracy", f"{acc*100:.2f}%")
 
-# Confusion matrix
-cm = confusion_matrix(y_test, pred)
-fig_cm, ax = plt.subplots()
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
-ax.set_xlabel('Predicted')
-ax.set_ylabel('Actual')
-st.pyplot(fig_cm)
+    # Confusion matrix
+    cm = confusion_matrix(y_test, pred)
+    fig_cm, ax = plt.subplots()
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    st.pyplot(fig_cm)
 
 # Predict for a new stock
 new_ticker = st.text_input("Enter Stock to Predict Sector", "AMZN")
