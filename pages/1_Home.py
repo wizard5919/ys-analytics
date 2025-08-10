@@ -1,50 +1,15 @@
 import streamlit as st
-import os
-from PIL import Image
 
-# Check environment (local vs cloud)
-is_cloud = os.path.exists('/mount/src/ys-analytics')
-
-# Try to load logo
-try:
-    if is_cloud:
-        # Streamlit Cloud path
-        logo_path = '/mount/src/ys-analytics/assets/logo.png'
-    else:
-        # Local path
-        logo_path = 'assets/logo.png'
-    
-    logo = Image.open(logo_path)
-    has_logo = True
-except Exception as e:
-    # Fallback to GitHub URL
-    try:
-        logo_url = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
-        has_logo = True
-    except:
-        st.warning("Logo could not be loaded. Please check the file path.")
-        has_logo = False
+# GitHub raw URL for your logo
+LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
 # Page header
-if has_logo:
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        # Use different method based on source
-        if 'logo_url' in locals():
-            st.image(logo_url, use_container_width=True)
-        else:
-            st.image(logo, use_container_width=True)
-    with col2:
-        st.title("YS Analytics")
-        st.markdown("**Data-Driven Market Intelligence**")
-else:
-    # Text-based fallback
-    st.markdown("""
-    <div style="background-color:#0A1F44; padding:20px; border-radius:12px; margin-bottom:20px">
-        <h1 style="color:white; margin:0">YS Analytics</h1>
-        <p style="color:#00C2FF; margin:0">Data-Driven Market Intelligence</p>
-    </div>
-    """, unsafe_allow_html=True)
+col1, col2 = st.columns([1, 3])
+with col1:
+    st.image(LOGO_URL, width=150)
+with col2:
+    st.title("YS Analytics")
+    st.markdown("**Data-Driven Market Intelligence**")
 
 # Mission statement
 st.markdown("""
@@ -65,28 +30,63 @@ st.header("Featured Analytics Projects")
 st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
 
 col1, col2, col3 = st.columns(3)
+
+# Project 1 - Options Analytics Suite
 with col1:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Options Analytics Suite")
     st.markdown("Real-time Greeks calculation and volatility surface visualization")
-    st.markdown("`Python` `Streamlit` `QuantLib`")
-    st.button("View Project", key="p1", use_container_width=True)
+    st.markdown("""
+    <div style="margin: 10px 0;">
+        <span class="tech-tag">Python</span>
+        <span class="tech-tag">Streamlit</span>
+        <span class="tech-tag">QuantLib</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create link to project section
+    if st.button("View Project", key="p1", use_container_width=True):
+        st.session_state.navigate_to = "options"
+        st.switch_page("pages/2_Projects.py")
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
+# Project 2 - Market Sector Classifier
 with col2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Market Sector Classifier")
     st.markdown("ML-driven sector analysis using price movement patterns")
-    st.markdown("`Scikit-learn` `TA-Lib` `Plotly`")
-    st.button("View Project", key="p2", use_container_width=True)
+    st.markdown("""
+    <div style="margin: 10px 0;">
+        <span class="tech-tag">Scikit-learn</span>
+        <span class="tech-tag">TA-Lib</span>
+        <span class="tech-tag">Plotly</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("View Project", key="p2", use_container_width=True):
+        st.session_state.navigate_to = "sector"
+        st.switch_page("pages/2_Projects.py")
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
+# Project 3 - Macroeconomic Dashboard
 with col3:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Macroeconomic Dashboard")
     st.markdown("Global economic indicators with forecasting capabilities")
-    st.markdown("`FRED API` `Prophet` `Altair`")
-    st.button("View Project", key="p3", use_container_width=True)
+    st.markdown("""
+    <div style="margin: 10px 0;">
+        <span class="tech-tag">FRED API</span>
+        <span class="tech-tag">Prophet</span>
+        <span class="tech-tag">Altair</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("View Project", key="p3", use_container_width=True):
+        st.session_state.navigate_to = "macro"
+        st.switch_page("pages/2_Projects.py")
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Call to action
@@ -108,3 +108,19 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
+# Custom CSS for tech tags
+st.markdown("""
+<style>
+.tech-tag {
+    display: inline-block;
+    background-color: #0A1F44;
+    color: #00C2FF;
+    border-radius: 12px;
+    padding: 2px 10px;
+    margin: 2px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+</style>
+""", unsafe_allow_html=True)
