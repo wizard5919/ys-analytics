@@ -26,16 +26,20 @@ except ImportError:
 import aiohttp
 import asyncio
 import requests
-import unittest # Added for unit tests
+import unittest  # Added for unit tests
+
 # Suppress future warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
+
 st.set_page_config(
     page_title="Options Greeks Buy Signal Analyzer",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # NEW: Auto-refresh for real-time updates
 refresh_interval = st_autorefresh(interval=1000, limit=None, key="price_refresh")
+
 # =============================
 # ENHANCED CONFIGURATION & CONSTANTS
 # =============================
@@ -44,7 +48,7 @@ CONFIG = {
     'ALPHA_VANTAGE_API_KEY': '', # New: Alpha Vantage API key
     'FMP_API_KEY': '', # New: Financial Modeling Prep API key
     'IEX_API_KEY': '', # New: IEX Cloud API key
-    'FINNHUB_API_KEY': '', # Added for sentiment
+    'FINNHUB_API_KEY': '',  # Added for sentiment
     'MAX_RETRIES': 5,
     'RETRY_DELAY': 2,
     'DATA_TIMEOUT': 30,
@@ -88,9 +92,11 @@ CONFIG = {
         '1h': 10 # Largest window for smoothing
     }
 }
+
 # Initialize API call log in session state
 if 'API_CALL_LOG' not in st.session_state:
     st.session_state.API_CALL_LOG = []
+
 # Enhanced signal thresholds with weighted conditions
 SIGNAL_THRESHOLDS = {
     'call': {
@@ -115,7 +121,7 @@ SIGNAL_THRESHOLDS = {
             'vega': 0.10, # NEW: Vega weight
             'oi': 0.10, # NEW: Open Interest weight
             'sr_proximity': 0.15, # NEW: Support/Resistance proximity weight
-            'sentiment': 0.05 # Added sentiment weight
+            'sentiment': 0.05  # Added sentiment weight
         }
     },
     'put': {
@@ -140,23 +146,24 @@ SIGNAL_THRESHOLDS = {
             'vega': 0.10, # NEW: Vega weight
             'oi': 0.10, # NEW: Open Interest weight
             'sr_proximity': 0.15, # NEW: Support/Resistance proximity weight
-            'sentiment': 0.05 # Added sentiment weight
+            'sentiment': 0.05  # Added sentiment weight
         }
     }
 }
+
 # =============================
 # UTILITY FUNCTIONS FOR FREE DATA SOURCES
 # =============================
 def can_make_request(source: str) -> bool:
     """Check if we can make another request without hitting limits"""
     now = time.time()
-  
+   
     # Clean up old entries (older than 1 hour)
     st.session_state.API_CALL_LOG = [
         t for t in st.session_state.API_CALL_LOG
         if now - t['timestamp'] < 3600
     ]
-  
+   
     # Count recent requests by source
     av_count = len([t for t in st.session_state.API_CALL_LOG
                    if t['source'] == "ALPHA_VANTAGE" and now - t['timestamp'] < 60])
@@ -164,7 +171,7 @@ def can_make_request(source: str) -> bool:
                     if t['source'] == "FMP" and now - t['timestamp'] < 3600])
     iex_count = len([t for t in st.session_state.API_CALL_LOG
                    if t['source'] == "IEX" and now - t['timestamp'] < 3600])
-  
+   
     # Enforce rate limits
     if source == "ALPHA_VANTAGE" and av_count >= 4: # 5 req/min limit (leaving 1 buffer)
         return False
@@ -172,14 +179,16 @@ def can_make_request(source: str) -> bool:
         return False
     if source == "IEX" and iex_count >= 29: # 50k/mo ≈ 30/hour (leaving 1 buffer)
         return False
-  
+   
     return True
+
 def log_api_request(source: str):
     """Log an API request to track usage"""
     st.session_state.API_CALL_LOG.append({
         'source': source,
         'timestamp': time.time()
     })
+
 # =============================
 # COMPLETELY REWRITTEN SUPPORT/RESISTANCE FUNCTIONS
 # =============================
@@ -189,7 +198,7 @@ def find_peaks_valleys_robust(data: np.array, order: int = 5, prominence: float 
     """
     if len(data) < order * 2 + 1:
         return [], []
-  
+   
     try:
         if SCIPY_AVAILABLE and prominence is not None:
             # Use scipy for better peak detection with prominence
@@ -200,7 +209,7 @@ def find_peaks_valleys_robust(data: np.array, order: int = 5, prominence: float 
             # Fallback method with improved logic
             peaks = []
             valleys = []
-          
+           
             for i in range(order, len(data) - order):
                 # Check for peak
                 is_peak = True
@@ -210,7 +219,7 @@ def find_peaks_valleys_robust(data: np.array, order: int = 5, prominence: float 
                         break
                 if is_peak:
                     peaks.append(i)
-              
+               
                 # Check for valley
                 is_valley = True
                 for j in range(1, order + 1):
@@ -219,11 +228,12 @@ def find_peaks_valleys_robust(data: np.array, order: int = 5, prominence: float 
                         break
                 if is_valley:
                     valleys.append(i)
-          
+           
             return peaks, valleys
     except Exception as e:
         st.warning(f"Error in peak detection: {str(e)}")
         return [], []
+
 def calculate_dynamic_sensitivity(data: pd.DataFrame, base_sensitivity: float) -> float:
     """
     Calculate dynamic sensitivity based on price volatility and range
@@ -231,11 +241,11 @@ def calculate_dynamic_sensitivity(data: pd.DataFrame, base_sensitivity: float) -
     try:
         if data.empty or len(data) < 10:
             return base_sensitivity
-      
+       
         # Calculate price range and volatility
         price_range = data['High'].max() - data['Low'].min()
         current_price = data['Close'].iloc[-1]
-      
+       
         # Calculate ATR-based volatility
         if 'High' in data.columns and 'Low' in data.columns and 'Close' in data.columns:
             tr1 = data['High'] - data['Low']
@@ -243,33 +253,34 @@ def calculate_dynamic_sensitivity(data: pd.DataFrame, base_sensitivity: float) -
             tr3 = abs(data['Low'] - data['Close'].shift(1))
             true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
             atr = true_range.rolling(window=min(14, len(data))).mean().iloc[-1]
-          
+           
             if not pd.isna(atr) and atr > 0:
                 # Scale sensitivity based on ATR relative to price
                 volatility_ratio = atr / current_price
                 # Increase sensitivity for higher volatility
                 dynamic_sensitivity = base_sensitivity * (1 + volatility_ratio * 2)
-              
+               
                 # Cap the sensitivity to reasonable bounds
                 return min(max(dynamic_sensitivity, base_sensitivity * 0.5), base_sensitivity * 3)
-      
+       
         return base_sensitivity
-      
+       
     except Exception as e:
         st.warning(f"Error calculating dynamic sensitivity: {str(e)}")
         return base_sensitivity
+
 def cluster_levels_improved(levels: List[float], current_price: float, sensitivity: float, level_type: str) -> List[Dict]:
     """
     Improved level clustering with strength scoring and current price weighting
     """
     if not levels:
         return []
-  
+   
     try:
         levels = sorted(levels)
         clustered = []
         current_cluster = []
-      
+       
         for level in levels:
             if not current_cluster:
                 current_cluster.append(level)
@@ -277,7 +288,7 @@ def cluster_levels_improved(levels: List[float], current_price: float, sensitivi
                 # Check if level should be in current cluster
                 cluster_center = np.mean(current_cluster)
                 distance_ratio = abs(level - cluster_center) / current_price
-              
+               
                 if distance_ratio <= sensitivity:
                     current_cluster.append(level)
                 else:
@@ -286,7 +297,7 @@ def cluster_levels_improved(levels: List[float], current_price: float, sensitivi
                         cluster_price = np.mean(current_cluster)
                         cluster_strength = len(current_cluster)
                         distance_from_current = abs(cluster_price - current_price) / current_price
-                      
+                       
                         clustered.append({
                             'price': cluster_price,
                             'strength': cluster_strength,
@@ -294,15 +305,15 @@ def cluster_levels_improved(levels: List[float], current_price: float, sensitivi
                             'type': level_type,
                             'raw_levels': current_cluster.copy()
                         })
-                  
+                   
                     current_cluster = [level]
-      
+       
         # Don't forget the last cluster
         if current_cluster:
             cluster_price = np.mean(current_cluster)
             cluster_strength = len(current_cluster)
             distance_from_current = abs(cluster_price - current_price) / current_price
-          
+           
             clustered.append({
                 'price': cluster_price,
                 'strength': cluster_strength,
@@ -310,19 +321,20 @@ def cluster_levels_improved(levels: List[float], current_price: float, sensitivi
                 'type': level_type,
                 'raw_levels': current_cluster.copy()
             })
-      
+       
         # Sort by strength first, then by distance to current price
         clustered.sort(key=lambda x: (-x['strength'], x['distance']))
-      
+       
         return clustered[:5] # Return top 5 levels
-      
+       
     except Exception as e:
         st.warning(f"Error clustering levels: {str(e)}")
         # Return raw levels as fallback
         return [{'price': level, 'strength': 1, 'distance': abs(level - current_price) / current_price, 'type': level_type, 'raw_levels': [level]} for level in levels[:5]]
+
 def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, current_price: float) -> dict:
     """
-    Enhanced support/resistance calculation with proper level alignment
+    Enhanced support/resistance calculation with proper alignment and strength scoring
     """
     if data.empty or len(data) < 20:
         return {
@@ -332,24 +344,24 @@ def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, cu
             'timeframe': timeframe,
             'data_points': len(data) if not data.empty else 0
         }
-  
+   
     try:
         # Get configuration for this timeframe
         base_sensitivity = CONFIG['SR_SENSITIVITY'].get(timeframe, 0.005)
         window_size = CONFIG['SR_WINDOW_SIZES'].get(timeframe, 5)
-      
+       
         # Calculate dynamic sensitivity
         dynamic_sensitivity = calculate_dynamic_sensitivity(data, base_sensitivity)
-      
+       
         # Prepare price arrays
         highs = data['High'].values
         lows = data['Low'].values
         closes = data['Close'].values
-      
+       
         # Calculate prominence for better peak detection (based on timeframe)
         price_std = np.std(closes)
         prominence = price_std * 0.5 # Adjust prominence based on price volatility
-      
+       
         # Find peaks and valleys with improved method
         resistance_indices, support_indices = find_peaks_valleys_robust(
             highs, order=window_size, prominence=prominence
@@ -357,37 +369,37 @@ def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, cu
         support_valleys, resistance_peaks = find_peaks_valleys_robust(
             lows, order=window_size, prominence=prominence
         )
-      
+       
         # Combine indices for more comprehensive analysis
         all_resistance_indices = list(set(resistance_indices + resistance_peaks))
         all_support_indices = list(set(support_indices + support_valleys))
-      
+       
         # Extract price levels
         resistance_levels = [float(highs[i]) for i in all_resistance_indices if i < len(highs)]
         support_levels = [float(lows[i]) for i in all_support_indices if i < len(lows)]
-      
+       
         # Add pivot points from close prices for additional confirmation
         close_peaks, close_valleys = find_peaks_valleys_robust(closes, order=max(3, window_size-2))
         resistance_levels.extend([float(closes[i]) for i in close_peaks])
         support_levels.extend([float(closes[i]) for i in close_valleys])
-      
+       
         # Remove duplicates and filter out levels too close to current price
         min_distance = current_price * 0.001 # Minimum 0.1% distance
         resistance_levels = [level for level in set(resistance_levels) if abs(level - current_price) > min_distance]
         support_levels = [level for level in set(support_levels) if abs(level - current_price) > min_distance]
-      
+       
         # Separate levels above and below current price more strictly
         resistance_levels = [level for level in resistance_levels if level > current_price]
         support_levels = [level for level in support_levels if level < current_price]
-      
+       
         # Cluster levels with improved algorithm
         clustered_resistance = cluster_levels_improved(resistance_levels, current_price, dynamic_sensitivity, 'resistance')
         clustered_support = cluster_levels_improved(support_levels, current_price, dynamic_sensitivity, 'support')
-      
+       
         # Extract just the prices for return (maintaining backward compatibility)
         final_resistance = [level['price'] for level in clustered_resistance]
         final_support = [level['price'] for level in clustered_support]
-      
+       
         return {
             'support': final_support,
             'resistance': final_resistance,
@@ -403,7 +415,7 @@ def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, cu
                 'clustered_resistance_count': len(final_resistance)
             }
         }
-      
+       
     except Exception as e:
         st.error(f"Error calculating S/R for {timeframe}: {str(e)}")
         return {
@@ -414,6 +426,7 @@ def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, cu
             'data_points': len(data) if not data.empty else 0,
             'error': str(e)
         }
+
 @st.cache_data(ttl=300, show_spinner=False)
 def get_multi_timeframe_data_enhanced(ticker: str) -> Tuple[dict, float]:
     """
@@ -426,10 +439,10 @@ def get_multi_timeframe_data_enhanced(ticker: str) -> Tuple[dict, float]:
         '30min': {'interval': '30m', 'period': '30d'},
         '1h': {'interval': '60m', 'period': '90d'} # Extended period for 1h timeframe
     }
-  
+   
     data = {}
     current_price = None
-  
+   
     for tf, params in timeframes.items():
         try:
             # Add retry logic for each timeframe
@@ -443,55 +456,55 @@ def get_multi_timeframe_data_enhanced(ticker: str) -> Tuple[dict, float]:
                         progress=False,
                         prepost=True
                     )
-                  
+                   
                     # Check if we have enough data points
                     if len(df) < CONFIG['MIN_DATA_POINTS']:
                         # Extend period for another 30 days
                         extended_period = int(params['period'][:-1]) + 30
                         params['period'] = f"{extended_period}d"
                         continue
-                  
+                   
                     if not df.empty:
                         # Clean and validate data
                         df = df.dropna()
-                      
+                       
                         # Handle multi-level columns
                         if isinstance(df.columns, pd.MultiIndex):
                             df.columns = df.columns.droplevel(1)
-                      
+                       
                         # Ensure we have required columns
                         required_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
                         if all(col in df.columns for col in required_cols):
                             # Additional data validation
                             df = df[df['High'] >= df['Low']] # Remove invalid bars
                             df = df[df['Volume'] >= 0] # Remove negative volume
-                          
+                           
                             if len(df) >= CONFIG['MIN_DATA_POINTS']: # Minimum data points for reliable S/R
                                 df = df[required_cols]
                                 data[tf] = df
-                              
+                               
                                 # Get current price from most recent data
                                 if current_price is None and tf == '5min': # Use 5min as reference
                                     current_price = float(df['Close'].iloc[-1])
-                  
+                   
                     break # Success, exit retry loop
-                  
+                   
                 except Exception as e:
                     if attempt == max_retries - 1: # Last attempt
                         st.warning(f"Error fetching {tf} data after {max_retries} attempts: {str(e)}")
                     else:
                         time.sleep(1) # Wait before retry
-                      
+                       
         except Exception as e:
             st.warning(f"Error fetching {tf} data: {str(e)}")
-  
+   
     # If we couldn't get current price from 5min, try other timeframes
     if current_price is None:
         for tf in ['1min', '15min', '30min', '1h']:
             if tf in data:
                 current_price = float(data[tf]['Close'].iloc[-1])
                 break
-  
+   
     # If still no current price, try a simple yfinance call
     if current_price is None:
         try:
@@ -501,8 +514,9 @@ def get_multi_timeframe_data_enhanced(ticker: str) -> Tuple[dict, float]:
                 current_price = float(hist['Close'].iloc[-1])
         except:
             current_price = 100.0 # Fallback
-  
+   
     return data, current_price
+
 def analyze_support_resistance_enhanced(ticker: str) -> dict:
     """
     Enhanced support/resistance analysis with proper level alignment
@@ -510,25 +524,25 @@ def analyze_support_resistance_enhanced(ticker: str) -> dict:
     try:
         # Get multi-timeframe data
         tf_data, current_price = get_multi_timeframe_data_enhanced(ticker)
-      
+       
         if not tf_data:
             st.error("Unable to fetch any timeframe data for S/R analysis")
             return {}
-      
+       
         st.info(f"📊 Analyzing S/R with current price: ${current_price:.2f}")
-      
+       
         results = {}
-      
+       
         # Process each timeframe with the same current price reference
         for timeframe, data in tf_data.items():
             if not data.empty:
                 try:
                     sr_result = calculate_support_resistance_enhanced(data, timeframe, current_price)
                     results[timeframe] = sr_result
-                  
+                   
                     # Debug info
                     st.caption(f"✅ {timeframe}: {len(sr_result['support'])} support, {len(sr_result['resistance'])} resistance levels")
-                  
+                   
                 except Exception as e:
                     st.warning(f"Error calculating S/R for {timeframe}: {str(e)}")
                     results[timeframe] = {
@@ -538,75 +552,77 @@ def analyze_support_resistance_enhanced(ticker: str) -> dict:
                         'timeframe': timeframe,
                         'error': str(e)
                     }
-      
+       
         # Validate alignment across timeframes
         validate_sr_alignment(results, current_price)
-      
+       
         return results
-      
+       
     except Exception as e:
         st.error(f"Error in enhanced support/resistance analysis: {str(e)}")
         return {}
+
 def validate_sr_alignment(results: dict, current_price: float):
     """
     Validate that support/resistance levels are properly aligned across timeframes
     """
     try:
         st.subheader("🔍 S/R Alignment Validation")
-      
+       
         all_support = []
         all_resistance = []
-      
+       
         for tf, data in results.items():
             support_levels = data.get('support', [])
             resistance_levels = data.get('resistance', [])
-          
+           
             # Validate that support is below current price
             invalid_support = [level for level in support_levels if level >= current_price]
             if invalid_support:
                 st.warning(f"⚠️ {tf}: Found {len(invalid_support)} support levels above current price")
-          
+           
             # Validate that resistance is above current price
             invalid_resistance = [level for level in resistance_levels if level <= current_price]
             if invalid_resistance:
                 st.warning(f"⚠️ {tf}: Found {len(invalid_resistance)} resistance levels below current price")
-          
+           
             # Collect valid levels
             valid_support = [level for level in support_levels if level < current_price]
             valid_resistance = [level for level in resistance_levels if level > current_price]
-          
+           
             all_support.extend([(tf, level) for level in valid_support])
             all_resistance.extend([(tf, level) for level in valid_resistance])
-          
+           
             # Update results with valid levels only
             results[tf]['support'] = valid_support
             results[tf]['resistance'] = valid_resistance
-      
+       
         # Show alignment summary
         if all_support or all_resistance:
             col1, col2 = st.columns(2)
-          
+           
             with col1:
                 st.success(f"✅ Total Valid Support Levels: {len(all_support)}")
                 if all_support:
                     closest_support = max(all_support, key=lambda x: x[1])
                     st.info(f"🎯 Closest Support: ${closest_support[1]:.2f} ({closest_support[0]})")
-          
+           
             with col2:
                 st.success(f"✅ Total Valid Resistance Levels: {len(all_resistance)}")
                 if all_resistance:
                     closest_resistance = min(all_resistance, key=lambda x: x[1])
                     st.info(f"🎯 Closest Resistance: ${closest_resistance[1]:.2f} ({closest_resistance[0]})")
-      
+       
     except Exception as e:
         st.warning(f"Error in alignment validation: {str(e)}")
+
 def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
     """
     Enhanced visualization of support/resistance levels with better organization
     """
     try:
         fig = go.Figure()
-      
+       
         # Add current price line
         fig.add_hline(
             y=current_price,
@@ -622,7 +638,7 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
                 borderwidth=1
             )
         )
-      
+       
         # Color scheme for timeframes
         timeframe_colors = {
             '1min': 'rgba(255,0,0,0.8)', # Red
@@ -631,17 +647,17 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
             '30min': 'rgba(0,255,0,0.8)', # Green
             '1h': 'rgba(0,0,255,0.8)' # Blue
         }
-      
+       
         # Prepare data for plotting
         support_data = []
         resistance_data = []
-      
+       
         for tf, sr in data.items():
             color = timeframe_colors.get(tf, 'gray')
-          
+           
             # Add support levels
             for level in sr.get('support', []):
-                if isinstance(level, (int, float)) and not math.isnan(level):
+                if isinstance(level, (int, float)) and not math.isnan(level) and level < current_price:
                     support_data.append({
                         'timeframe': tf,
                         'price': float(level),
@@ -649,10 +665,10 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
                         'color': color,
                         'distance_pct': abs(level - current_price) / current_price * 100
                     })
-          
+           
             # Add resistance levels
             for level in sr.get('resistance', []):
-                if isinstance(level, (int, float)) and not math.isnan(level):
+                if isinstance(level, (int, float)) and not math.isnan(level) and level > current_price:
                     resistance_data.append({
                         'timeframe': tf,
                         'price': float(level),
@@ -660,7 +676,7 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
                         'color': color,
                         'distance_pct': abs(level - current_price) / current_price * 100
                     })
-      
+       
         # Plot support levels
         if support_data:
             support_df = pd.DataFrame(support_data)
@@ -682,7 +698,7 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
                                  'Distance: %{customdata:.2f}%<extra></extra>',
                     customdata=tf_data['distance_pct']
                 ))
-      
+       
         # Plot resistance levels
         if resistance_data:
             resistance_df = pd.DataFrame(resistance_data)
@@ -704,7 +720,7 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
                                  'Distance: %{customdata:.2f}%<extra></extra>',
                     customdata=tf_data['distance_pct']
                 ))
-      
+       
         # Update layout
         fig.update_layout(
             title=dict(
@@ -729,39 +745,40 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
             ),
             margin=dict(r=150) # Make room for legend
         )
-      
+       
         # FIXED: Dynamic range based on volatility
         # Collect all levels to determine range
         all_levels = []
         for tf, sr in data.items():
             all_levels.extend(sr.get('support', []))
             all_levels.extend(sr.get('resistance', []))
-      
+       
         if all_levels:
             min_level = min(all_levels)
             max_level = max(all_levels)
             price_range = max_level - min_level
             padding = price_range * 0.1 # 10% padding
-          
+           
             y_min = max(0, min_level - padding)
             y_max = max_level + padding
         else:
             # Default range of 10% around current price
             y_min = current_price * 0.90
             y_max = current_price * 1.10
-      
+       
         # Apply dynamic range
         fig.update_layout(
             yaxis=dict(
                 range=[y_min, y_max]
             )
         )
-      
+       
         return fig
-      
+       
     except Exception as e:
         st.error(f"Error creating enhanced S/R plot: {str(e)}")
         return go.Figure()
+
 # =============================
 # ENHANCED UTILITY FUNCTIONS
 # =============================
@@ -771,40 +788,43 @@ def is_market_open() -> bool:
         eastern = pytz.timezone('US/Eastern')
         now = datetime.datetime.now(eastern)
         now_time = now.time()
-      
+       
         if now.weekday() >= 5:
             return False
-      
+       
         return CONFIG['MARKET_OPEN'] <= now_time <= CONFIG['MARKET_CLOSE']
     except Exception:
         return False
+
 def is_premarket() -> bool:
     """Check if we're in premarket hours"""
     try:
         eastern = pytz.timezone('US/Eastern')
         now = datetime.datetime.now(eastern)
         now_time = now.time()
-      
+       
         if now.weekday() >= 5:
             return False
-      
+       
         return CONFIG['PREMARKET_START'] <= now_time < CONFIG['MARKET_OPEN']
     except Exception:
         return False
+
 def is_early_market() -> bool:
     """Check if we're in the first 30 minutes of market open"""
     try:
         if not is_market_open():
             return False
-      
+       
         eastern = pytz.timezone('US/Eastern')
         now = datetime.datetime.now(eastern)
         market_open_today = datetime.datetime.combine(now.date(), CONFIG['MARKET_OPEN'])
         market_open_today = eastern.localize(market_open_today)
-      
+       
         return (now - market_open_today).total_seconds() < 1800
     except Exception:
         return False
+
 def calculate_remaining_trading_hours() -> float:
     """Calculate remaining trading hours in the day"""
     try:
@@ -812,41 +832,42 @@ def calculate_remaining_trading_hours() -> float:
         now = datetime.datetime.now(eastern)
         close_time = datetime.datetime.combine(now.date(), CONFIG['MARKET_CLOSE'])
         close_time = eastern.localize(close_time)
-      
+       
         if now >= close_time:
             return 0.0
-      
+       
         return (close_time - now).total_seconds() / 3600
     except Exception:
         return 0.0
+
 # UPDATED: Enhanced price fetching with multi-source fallback using async
 async def async_get_current_price(ticker: str) -> float:
     """Async get real-time price from multiple free sources"""
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
         tasks = []
-       
+        
         # Polygon
         if CONFIG['POLYGON_API_KEY']:
             tasks.append(fetch_polygon(session, ticker))
-       
+        
         # Alpha Vantage
         if CONFIG['ALPHA_VANTAGE_API_KEY'] and can_make_request("ALPHA_VANTAGE"):
             tasks.append(fetch_alpha_vantage(session, ticker))
-       
+        
         # FMP
         if CONFIG['FMP_API_KEY'] and can_make_request("FMP"):
             tasks.append(fetch_fmp(session, ticker))
-       
+        
         # IEX
         if CONFIG['IEX_API_KEY'] and can_make_request("IEX"):
             tasks.append(fetch_iex(session, ticker))
-       
+        
         results = await asyncio.gather(*tasks, return_exceptions=True)
-       
+        
         for result in results:
             if not isinstance(result, Exception) and result > 0:
                 return result
-   
+    
     # Sync fallback to Yahoo Finance
     try:
         stock = yf.Ticker(ticker)
@@ -855,8 +876,9 @@ async def async_get_current_price(ticker: str) -> float:
             return float(data['Close'].iloc[-1])
     except Exception:
         pass
-   
+    
     return 0.0
+
 async def fetch_polygon(session, ticker):
     try:
         url = f"https://api.polygon.io/v2/last/trades/{ticker}?apiKey={CONFIG['POLYGON_API_KEY']}"
@@ -868,6 +890,7 @@ async def fetch_polygon(session, ticker):
     except:
         pass
     return 0.0
+
 async def fetch_alpha_vantage(session, ticker):
     try:
         url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker}&apikey={CONFIG['ALPHA_VANTAGE_API_KEY']}"
@@ -880,6 +903,7 @@ async def fetch_alpha_vantage(session, ticker):
     except:
         pass
     return 0.0
+
 async def fetch_fmp(session, ticker):
     try:
         url = f"https://financialmodelingprep.com/api/v3/quote-short/{ticker}?apikey={CONFIG['FMP_API_KEY']}"
@@ -892,6 +916,7 @@ async def fetch_fmp(session, ticker):
     except:
         pass
     return 0.0
+
 async def fetch_iex(session, ticker):
     try:
         url = f"https://cloud.iexapis.com/stable/stock/{ticker}/quote?token={CONFIG['IEX_API_KEY']}"
@@ -904,9 +929,11 @@ async def fetch_iex(session, ticker):
     except:
         pass
     return 0.0
+
 @st.cache_data(ttl=5, show_spinner=False)
 def get_current_price(ticker: str) -> float:
     return asyncio.run(async_get_current_price(ticker))
+
 # NEW: Combined stock data and indicators function for better caching
 @st.cache_data(ttl=CONFIG['STOCK_CACHE_TTL'], show_spinner=False)
 def get_stock_data_with_indicators(ticker: str) -> pd.DataFrame:
@@ -915,7 +942,7 @@ def get_stock_data_with_indicators(ticker: str) -> pd.DataFrame:
         # Determine time range
         end = datetime.datetime.now()
         start = end - datetime.timedelta(days=10)
-      
+       
         data = yf.download(
             ticker,
             start=start,
@@ -930,7 +957,7 @@ def get_stock_data_with_indicators(ticker: str) -> pd.DataFrame:
         # Handle multi-level columns
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = data.columns.droplevel(1)
-      
+       
         # Ensure we have required columns
         required_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
         missing_cols = [col for col in required_cols if col not in data.columns]
@@ -938,57 +965,58 @@ def get_stock_data_with_indicators(ticker: str) -> pd.DataFrame:
             return pd.DataFrame()
         # Clean and validate data
         data = data.dropna(how='all')
-      
+       
         for col in required_cols:
             data[col] = pd.to_numeric(data[col], errors='coerce')
         data = data.dropna(subset=required_cols)
-      
+       
         if len(data) < CONFIG['MIN_DATA_POINTS']:
             return pd.DataFrame()
-      
+       
         # Handle timezone
         eastern = pytz.timezone('US/Eastern')
-      
+       
         if data.index.tz is None:
             data.index = data.index.tz_localize(pytz.utc)
-      
+       
         data.index = data.index.tz_convert(eastern)
-      
+       
         # Add premarket indicator
         data['premarket'] = (data.index.time >= CONFIG['PREMARKET_START']) & (data.index.time < CONFIG['MARKET_OPEN'])
-      
+       
         data = data.reset_index(drop=False)
-      
+       
         # Compute all indicators in one go
         data = compute_all_indicators(data)
-      
+       
         return data
-      
+       
     except Exception as e:
         st.error(f"Error fetching stock data: {str(e)}")
         return pd.DataFrame()
+
 def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """Compute all technical indicators efficiently"""
     if df.empty:
         return df
-  
+   
     try:
         df = df.copy()
-      
+       
         required_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
         for col in required_cols:
             if col not in df.columns:
                 return pd.DataFrame()
-      
+       
         # Convert to numeric
         for col in required_cols:
             df[col] = pd.to_numeric(df[col], errors='coerce')
-      
+       
         df = df.dropna(subset=required_cols)
-      
+       
         if df.empty:
             return df
-      
+       
         close = df['Close'].astype(float)
         high = df['High'].astype(float)
         low = df['Low'].astype(float)
@@ -1000,7 +1028,7 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
                 df[f'EMA_{period}'] = ema.ema_indicator()
             else:
                 df[f'EMA_{period}'] = np.nan
-          
+           
         # RSI
         if len(close) >= 14:
             rsi = RSIIndicator(close=close, window=14)
@@ -1012,7 +1040,7 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
         for session, group in df.groupby(pd.Grouper(key='Datetime', freq='D')):
             if group.empty:
                 continue
-          
+           
             # Calculate VWAP for regular hours
             regular = group[~group['premarket']]
             if not regular.empty:
@@ -1021,7 +1049,7 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
                 volume_cumsum = regular['Volume'].cumsum()
                 regular_vwap = np.where(volume_cumsum != 0, vwap_cumsum / volume_cumsum, np.nan)
                 df.loc[regular.index, 'VWAP'] = regular_vwap
-          
+           
             # Calculate VWAP for premarket
             premarket = group[group['premarket']]
             if not premarket.empty:
@@ -1030,7 +1058,7 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
                 volume_cumsum = premarket['Volume'].cumsum()
                 premarket_vwap = np.where(volume_cumsum != 0, vwap_cumsum / volume_cumsum, np.nan)
                 df.loc[premarket.index, 'VWAP'] = premarket_vwap
-      
+       
         # ATR
         if len(close) >= 14:
             atr = AverageTrueRange(high=high, low=low, close=close, window=14)
@@ -1039,14 +1067,14 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
         else:
             df['ATR'] = np.nan
             df['ATR_pct'] = np.nan
-      
+       
         # MACD and Keltner Channels
         if len(close) >= 26:
             macd = MACD(close=close)
             df['MACD'] = macd.macd()
             df['MACD_signal'] = macd.macd_signal()
             df['MACD_hist'] = macd.macd_diff()
-          
+           
             kc = KeltnerChannel(high=high, low=low, close=close)
             df['KC_upper'] = kc.keltner_channel_hband()
             df['KC_middle'] = kc.keltner_channel_mband()
@@ -1054,23 +1082,24 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
         else:
             for col in ['MACD', 'MACD_signal', 'MACD_hist', 'KC_upper', 'KC_middle', 'KC_lower']:
                 df[col] = np.nan
-      
+       
         # Calculate volume averages
         df = calculate_volume_averages(df)
-      
+       
         return df
-      
+       
     except Exception as e:
         st.error(f"Error in compute_all_indicators: {str(e)}")
         return pd.DataFrame()
+
 def calculate_volume_averages(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate volume averages with separate premarket handling"""
     if df.empty:
         return df
-  
+   
     df = df.copy()
     df['avg_vol'] = np.nan
-  
+   
     try:
         # Group by date and calculate averages
         for date, group in df.groupby(df['Datetime'].dt.date):
@@ -1078,32 +1107,120 @@ def calculate_volume_averages(df: pd.DataFrame) -> pd.DataFrame:
             if not regular.empty:
                 regular_avg_vol = regular['Volume'].expanding(min_periods=1).mean()
                 df.loc[regular.index, 'avg_vol'] = regular_avg_vol
-          
+           
             premarket = group[group['premarket']]
             if not premarket.empty:
                 premarket_avg_vol = premarket['Volume'].expanding(min_periods=1).mean()
                 df.loc[premarket.index, 'avg_vol'] = premarket_avg_vol
-      
+       
         # Fill any remaining NaN values with overall average
         overall_avg = df['Volume'].mean()
         df['avg_vol'] = df['avg_vol'].fillna(overall_avg)
-  
+       
     except Exception as e:
         st.warning(f"Error calculating volume averages: {str(e)}")
         df['avg_vol'] = df['Volume'].mean()
-  
+   
     return df
+
+# NEW: Real data fetching with fixed session handling
+@st.cache_data(ttl=1800, show_spinner=False) # 30-minute cache for real data
+def get_real_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.DataFrame]:
+    """Get real options data with proper yfinance handling"""
+   
+    # Check if we can clear the rate limit status
+    if 'yf_rate_limited_until' in st.session_state:
+        time_remaining = st.session_state['yf_rate_limited_until'] - time.time()
+        if time_remaining <= 0:
+            # Rate limit expired, try again
+            del st.session_state['yf_rate_limited_until']
+        else:
+            return [], pd.DataFrame(), pd.DataFrame()
+   
+    try:
+        # Don't use custom session - let yfinance handle it
+        stock = yf.Ticker(ticker)
+       
+        # Single attempt with minimal delay
+        try:
+            expiries = list(stock.options) if stock.options else []
+           
+            if not expiries:
+                return [], pd.DataFrame(), pd.DataFrame()
+           
+            # Get only the nearest expiry to minimize API calls
+            nearest_expiry = expiries[0]
+           
+            # Add small delay
+            time.sleep(1)
+           
+            chain = stock.option_chain(nearest_expiry)
+           
+            if chain is None:
+                return [], pd.DataFrame(), pd.DataFrame()
+           
+            calls = chain.calls.copy()
+            puts = chain.puts.copy()
+           
+            if calls.empty and puts.empty:
+                return [], pd.DataFrame(), pd.DataFrame()
+           
+            # Add expiry column
+            calls['expiry'] = nearest_expiry
+            puts['expiry'] = nearest_expiry
+           
+            # Validate we have essential columns
+            required_cols = ['strike', 'lastPrice', 'volume', 'openInterest']
+            calls_valid = all(col in calls.columns for col in required_cols)
+            puts_valid = all(col in puts.columns for col in required_cols)
+           
+            if not (calls_valid and puts_valid):
+                return [], pd.DataFrame(), pd.DataFrame()
+           
+            # Add Greeks columns if missing
+            for df_name, df in [('calls', calls), ('puts', puts)]:
+                if 'delta' not in df.columns:
+                    df['delta'] = np.nan
+                if 'gamma' not in df.columns:
+                    df['gamma'] = np.nan
+                if 'theta' not in df.columns:
+                    df['theta'] = np.nan
+                if 'vega' not in df.columns: # NEW: Add vega if missing
+                    df['vega'] = np.nan
+           
+            return [nearest_expiry], calls, puts
+           
+        except Exception as e:
+            error_msg = str(e).lower()
+            if any(keyword in error_msg for keyword in ["too many requests", "rate limit", "429", "quota"]):
+                # Set a shorter cooldown for real data attempts
+                st.session_state['yf_rate_limited_until'] = time.time() + 180 # 3 minutes
+                return [], pd.DataFrame(), pd.DataFrame()
+            else:
+                return [], pd.DataFrame(), pd.DataFrame()
+               
+    except Exception as e:
+        return [], pd.DataFrame(), pd.DataFrame()
+
+def clear_rate_limit():
+    """Allow user to manually clear rate limit"""
+    if 'yf_rate_limited_until' in st.session_state:
+        del st.session_state['yf_rate_limited_until']
+        st.success("✅ Rate limit status cleared - try fetching data again")
+        st.rerun()
+
 # NEW: Non-cached options data fetching (no widgets in cached functions)
 def get_full_options_chain(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.DataFrame]:
     """Get options data - prioritize real data, handle UI separately"""
-  
+   
     # Try to get real data
     expiries, calls, puts = get_real_options_data(ticker)
-  
+   
     return expiries, calls, puts
+
 def get_fallback_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.DataFrame]:
     """Enhanced fallback method with realistic options data"""
-  
+   
     # Get current price for realistic strikes
     try:
         current_price = get_current_price(ticker)
@@ -1117,11 +1234,11 @@ def get_fallback_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.
             current_price = default_prices.get(ticker, 100)
     except:
         current_price = 100
-  
+   
     # Create realistic strike ranges around current price
     strike_range = max(5, current_price * 0.1) # 10% range or minimum $5
     strikes = []
-  
+   
     # Generate strikes in reasonable increments
     if current_price < 50:
         increment = 1
@@ -1129,56 +1246,56 @@ def get_fallback_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.
         increment = 5
     else:
         increment = 10
-  
+   
     start_strike = int((current_price - strike_range) / increment) * increment
     end_strike = int((current_price + strike_range) / increment) * increment
-  
+   
     for strike in range(start_strike, end_strike + increment, increment):
         if strike > 0:
             strikes.append(strike)
-  
+   
     # Generate expiry dates with proper handling for weekends/holidays
     today = datetime.date.today()
     expiries = []
-  
+   
     # Add today if it's a weekday and market is open (0DTE)
     if today.weekday() < 5 and is_market_open():
         expiries.append(today.strftime('%Y-%m-%d'))
-  
+   
     # Add next Friday
     days_until_friday = (4 - today.weekday()) % 7
     if days_until_friday == 0:
         days_until_friday = 7
     next_friday = today + datetime.timedelta(days=days_until_friday)
     expiries.append(next_friday.strftime('%Y-%m-%d'))
-  
+   
     # Add week after
     week_after = next_friday + datetime.timedelta(days=7)
     expiries.append(week_after.strftime('%Y-%m-%d'))
-  
+   
     st.info(f"📊 Generated {len(strikes)} strikes around ${current_price:.2f} for {ticker}")
-  
+   
     # Create realistic options data with better Greeks approximation
     calls_data = []
     puts_data = []
-  
+   
     for expiry in expiries:
         expiry_date = datetime.datetime.strptime(expiry, '%Y-%m-%d').date()
         days_to_expiry = (expiry_date - today).days
         is_0dte = days_to_expiry == 0
-      
+       
         for strike in strikes:
             # Calculate moneyness
             moneyness = current_price / strike
-          
+           
             # Enhanced Greeks calculation using Black-Scholes approximation
             # This is a simplified version for demo purposes
             t = days_to_expiry / 365.0
             iv = 0.25 # Assume 25% implied volatility
-          
+           
             # Calculate d1 for Black-Scholes
             d1 = (math.log(current_price / strike) + (0.5 * iv**2) * t) / (iv * math.sqrt(t))
-          
+           
             # Delta calculation
             if moneyness > 1: # ITM call
                 call_delta = 0.7 + (moneyness - 1) * 0.2
@@ -1186,28 +1303,28 @@ def get_fallback_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.
             else: # OTM call
                 call_delta = 0.3 - (1 - moneyness) * 0.2
                 put_delta = call_delta - 1
-              
+               
             # Gamma calculation (same for calls and puts)
             gamma = (1 / (current_price * iv * math.sqrt(t))) * (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * d1**2)
-          
+           
             # Theta increases as expiry approaches
             theta = -0.1 if is_0dte else -0.05 if days_to_expiry <= 7 else -0.02
-          
+           
             # Vega calculation
             vega = current_price * math.sqrt(t) * (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * d1**2) * 0.01
-          
+           
             # Realistic pricing (very rough estimate)
             intrinsic_call = max(0, current_price - strike)
             intrinsic_put = max(0, strike - current_price)
             time_value = 5 if is_0dte else 10 if days_to_expiry <= 7 else 15
-          
+           
             call_price = intrinsic_call + time_value * gamma
             put_price = intrinsic_put + time_value * gamma
-          
+           
             # Volume estimates
             volume = 1000 if abs(moneyness - 1) < 0.05 else 500 # Higher volume near ATM
             open_interest = volume * 2 # OI typically higher than volume
-          
+           
             calls_data.append({
                 'contractSymbol': f"{ticker}{expiry.replace('-', '')}C{strike*1000:08.0f}",
                 'strike': strike,
@@ -1221,7 +1338,7 @@ def get_fallback_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.
                 'theta': round(theta, 3),
                 'vega': round(vega, 3)
             })
-          
+           
             puts_data.append({
                 'contractSymbol': f"{ticker}{expiry.replace('-', '')}P{strike*1000:08.0f}",
                 'strike': strike,
@@ -1235,19 +1352,21 @@ def get_fallback_options_data(ticker: str) -> Tuple[List[str], pd.DataFrame, pd.
                 'theta': round(theta, 3),
                 'vega': round(vega, 3)
             })
-  
+   
     calls_df = pd.DataFrame(calls_data)
     puts_df = pd.DataFrame(puts_data)
-  
+   
     st.success(f"✅ Generated realistic demo data: {len(calls_df)} calls, {len(puts_df)} puts")
     st.warning("⚠️ **DEMO DATA**: Realistic structure but not real market data. Do not use for actual trading!")
+
     return expiries, calls_df, puts_df
+
 def classify_moneyness(strike: float, spot: float) -> str:
     """Classify option moneyness with dynamic ranges"""
     try:
         diff = abs(strike - spot)
         diff_pct = diff / spot
-      
+       
         if diff_pct < 0.01: # Within 1%
             return 'ATM'
         elif strike < spot: # Below current price
@@ -1262,11 +1381,12 @@ def classify_moneyness(strike: float, spot: float) -> str:
                 return 'OTM'
     except Exception:
         return 'Unknown'
+
 def calculate_approximate_greeks(option: dict, spot_price: float) -> Tuple[float, float, float]:
     """Calculate approximate Greeks using simple formulas"""
     try:
         moneyness = spot_price / option['strike']
-      
+       
         if 'C' in option.get('contractSymbol', ''):
             if moneyness > 1.03:
                 delta = 0.95
@@ -1293,31 +1413,32 @@ def calculate_approximate_greeks(option: dict, spot_price: float) -> Tuple[float
             else:
                 delta = -0.35
                 gamma = 0.05
-      
-        theta = -0.05 if datetime.datetime.strptime(option['expiry'], "%Y-%m-%d").date() == datetime.date.today() else -0.02
-      
+       
+        theta = 0.05 if datetime.datetime.strptime(option['expiry'], "%Y-%m-%d").date() == datetime.date.today() else 0.02
+       
         return delta, gamma, theta
     except Exception:
         return 0.5, 0.05, 0.02
+
 def validate_option_data(option: pd.Series, spot_price: float) -> bool:
     """Validate that option has required data for analysis"""
     try:
         required_fields = ['strike', 'lastPrice', 'volume', 'openInterest', 'impliedVolatility']
-      
+       
         for field in required_fields:
             if field not in option or pd.isna(option[field]):
                 return False
-      
+       
         if option['lastPrice'] <= 0:
             return False
-      
+       
         # Fill in Greeks if missing
         if pd.isna(option.get('delta')) or pd.isna(option.get('gamma')) or pd.isna(option.get('theta')):
             delta, gamma, theta = calculate_approximate_greeks(option.to_dict(), spot_price)
             option['delta'] = delta
             option['gamma'] = gamma
             option['theta'] = theta
-      
+       
         # Fill in Vega if missing
         if pd.isna(option.get('vega')):
             try:
@@ -1328,32 +1449,33 @@ def validate_option_data(option: pd.Series, spot_price: float) -> bool:
                 option['vega'] = float(option['lastPrice']) * math.sqrt(dte / 365) * 0.01
             except:
                 option['vega'] = 0.1
-      
+       
         return True
     except Exception:
         return False
+
 def calculate_dynamic_thresholds(stock_data: pd.Series, side: str, option: dict, current_price: float) -> Dict[str, float]:
     """Calculate dynamic thresholds with enhanced volatility response"""
     try:
         thresholds = SIGNAL_THRESHOLDS[side].copy()
-      
+       
         volatility = stock_data.get('ATR_pct', 0.02)
-      
+       
         # Handle NaN volatility
         if pd.isna(volatility):
             volatility = 0.02
-      
+       
         vol_multiplier = 1 + (volatility * 100)
-      
+       
         if side == 'call':
             thresholds['delta_min'] = max(0.3, min(0.8, thresholds['delta_base'] * vol_multiplier))
         else:
             thresholds['delta_max'] = min(-0.3, max(-0.8, thresholds['delta_base'] * vol_multiplier))
-      
+       
         thresholds['gamma_min'] = thresholds['gamma_base'] * (1 + thresholds['gamma_vol_multiplier'] * (volatility * 200))
-      
+       
         thresholds['volume_multiplier'] = max(0.8, min(2.5, thresholds['volume_multiplier_base'] * (1 + thresholds['volume_vol_multiplier'] * (volatility * 150))))
-      
+       
         # Adjust for market conditions
         if is_premarket() or is_early_market():
             if side == 'call':
@@ -1362,7 +1484,7 @@ def calculate_dynamic_thresholds(stock_data: pd.Series, side: str, option: dict,
                 thresholds['delta_max'] = -0.35
             thresholds['volume_multiplier'] *= 0.6
             thresholds['gamma_min'] *= 0.8
-      
+       
         # DTE and moneyness adjustments
         try:
             expiry_date = datetime.datetime.strptime(option['expiry'], "%Y-%m-%d").date()
@@ -1372,9 +1494,9 @@ def calculate_dynamic_thresholds(stock_data: pd.Series, side: str, option: dict,
                 dte = 0
         except:
             dte = 1 # fallback
-      
+       
         moneyness = abs(float(option['strike']) - current_price) / current_price
-      
+       
         # Adjust thresholds by DTE
         if dte <= 1: # 0DTE/1DTE
             thresholds['gamma_min'] *= 1.5
@@ -1382,34 +1504,35 @@ def calculate_dynamic_thresholds(stock_data: pd.Series, side: str, option: dict,
         elif dte > 7: # longer-term
             thresholds['gamma_min'] *= 0.7
             thresholds['theta_base'] *= 1.2 # more tolerance for decay
-      
+       
         # Adjust by moneyness
         if moneyness < 0.01: # ATM
             thresholds['gamma_min'] *= 1.2
         elif moneyness > 0.05: # OTM
             thresholds['volume_min'] *= 1.5 # require more volume for conviction
-      
+       
         return thresholds
     except Exception:
         return SIGNAL_THRESHOLDS[side].copy()
+
 # NEW: Enhanced signal generation with precision improvements
 def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFrame, is_0dte: bool) -> Dict:
     """Generate trading signal with weighted scoring and detailed explanations"""
     if stock_df.empty:
         return {'signal': False, 'reason': 'No stock data available', 'score': 0.0, 'explanations': []}
-  
+   
     current_price = stock_df.iloc[-1]['Close']
-  
+   
     if not validate_option_data(option, current_price):
         return {'signal': False, 'reason': 'Insufficient option data', 'score': 0.0, 'explanations': []}
-  
+   
     latest = stock_df.iloc[-1]
-  
+   
     try:
         # Calculate dynamic thresholds with option data
         thresholds = calculate_dynamic_thresholds(latest, side, option.to_dict(), current_price)
         weights = thresholds['condition_weights']
-      
+       
         delta = float(option['delta'])
         gamma = float(option['gamma'])
         theta = float(option['theta'])
@@ -1417,7 +1540,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
         open_interest = float(option['openInterest'])
         iv = float(option.get('impliedVolatility', 0.25)) # Default to 25% if missing
         vega = float(option.get('vega', 0.1)) # Default to 0.1 if missing
-      
+       
         close = float(latest['Close'])
         ema_9 = float(latest['EMA_9']) if not pd.isna(latest['EMA_9']) else None
         ema_20 = float(latest['EMA_20']) if not pd.isna(latest['EMA_20']) else None
@@ -1425,14 +1548,14 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
         vwap = float(latest['VWAP']) if not pd.isna(latest['VWAP']) else None
         volume = float(latest['Volume'])
         avg_vol = float(latest['avg_vol']) if not pd.isna(latest['avg_vol']) else volume
-      
+       
         # Get sentiment
         sentiment = get_sentiment_score(option.get('contractSymbol', '').split()[0] if 'contractSymbol' in option else ticker)
-      
+       
         conditions = []
         explanations = []
         weighted_score = 0.0
-      
+       
         if side == "call":
             # Delta condition
             delta_pass = delta >= thresholds.get('delta_min', 0.5)
@@ -1448,7 +1571,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': delta_score,
                 'explanation': f"Delta {delta:.3f} {'✓' if delta_pass else '✗'} threshold {thresholds.get('delta_min', 0.5):.2f}. Higher delta = more price sensitivity."
             })
-          
+           
             # Gamma condition
             gamma_pass = gamma >= thresholds.get('gamma_min', 0.05)
             gamma_score = weights['gamma'] if gamma_pass else 0
@@ -1463,7 +1586,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': gamma_score,
                 'explanation': f"Gamma {gamma:.3f} {'✓' if gamma_pass else '✗'} threshold {thresholds.get('gamma_min', 0.05):.3f}. Higher gamma = faster delta changes."
             })
-          
+           
             # Theta condition
             theta_pass = theta <= thresholds['theta_base']
             theta_score = weights['theta'] if theta_pass else 0
@@ -1478,7 +1601,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': theta_score,
                 'explanation': f"Theta {theta:.3f} {'✓' if theta_pass else '✗'} threshold {thresholds['theta_base']:.3f}. Lower theta = less time decay."
             })
-          
+           
             # Trend condition
             trend_pass = ema_9 is not None and ema_20 is not None and close > ema_9 > ema_20
             trend_score = weights['trend'] if trend_pass else 0
@@ -1493,7 +1616,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': trend_score,
                 'explanation': f"Price above short-term EMAs {'✓' if trend_pass else '✗'}. Bullish trend alignment needed for calls."
             })
-          
+           
             # Sentiment condition
             sentiment_pass = sentiment > 0
             sentiment_score = weights['sentiment'] if sentiment_pass else 0
@@ -1522,7 +1645,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': delta_score,
                 'explanation': f"Delta {delta:.3f} {'✓' if delta_pass else '✗'} threshold {thresholds.get('delta_max', -0.5):.2f}. More negative delta = higher put sensitivity."
             })
-          
+           
             # Gamma condition (same as calls)
             gamma_pass = gamma >= thresholds.get('gamma_min', 0.05)
             gamma_score = weights['gamma'] if gamma_pass else 0
@@ -1537,7 +1660,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': gamma_score,
                 'explanation': f"Gamma {gamma:.3f} {'✓' if gamma_pass else '✗'} threshold {thresholds.get('gamma_min', 0.05):.3f}. Higher gamma = faster delta changes."
             })
-          
+           
             # Theta condition (same as calls)
             theta_pass = theta <= thresholds['theta_base']
             theta_score = weights['theta'] if theta_pass else 0
@@ -1552,7 +1675,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': theta_score,
                 'explanation': f"Theta {theta:.3f} {'✓' if theta_pass else '✗'} threshold {thresholds['theta_base']:.3f}. Lower theta = less time decay."
             })
-          
+           
             # Trend condition (inverted for puts)
             trend_pass = ema_9 is not None and ema_20 is not None and close < ema_9 < ema_20
             trend_score = weights['trend'] if trend_pass else 0
@@ -1567,7 +1690,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': trend_score,
                 'explanation': f"Price below short-term EMAs {'✓' if trend_pass else '✗'}. Bearish trend alignment needed for puts."
             })
-          
+           
             # Sentiment condition
             sentiment_pass = sentiment < 0
             sentiment_score = weights['sentiment'] if sentiment_pass else 0
@@ -1581,13 +1704,13 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 'score': sentiment_score,
                 'explanation': f"Sentiment {sentiment:.2f} {'✓' if sentiment_pass else '✗'} negative for puts."
             })
-      
+       
         # Momentum condition (RSI)
         if side == "call":
             momentum_pass = rsi is not None and rsi > thresholds['rsi_min']
         else:
             momentum_pass = rsi is not None and rsi < thresholds['rsi_max']
-      
+       
         momentum_score = weights['momentum'] if momentum_pass else 0
         weighted_score += momentum_score
         explanations.append({
@@ -1599,7 +1722,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'score': momentum_score,
             'explanation': f"RSI {rsi:.1f} {'✓' if momentum_pass else '✗'} indicates {'bullish' if side == 'call' else 'bearish'} momentum." if rsi else "RSI N/A"
         })
-      
+       
         # Volume condition
         volume_pass = option_volume > thresholds['volume_min']
         volume_score = weights['volume'] if volume_pass else 0
@@ -1613,7 +1736,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'score': volume_score,
             'explanation': f"Option volume {option_volume:.0f} {'✓' if volume_pass else '✗'} minimum {thresholds['volume_min']:.0f}. Higher volume = better liquidity."
         })
-      
+       
         # NEW: Vega/IV condition
         vega_min = 0.1
         iv_threshold = 0.35 # 35% IV threshold
@@ -1629,7 +1752,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'score': vega_score,
             'explanation': f"Vega/IV {'✓' if vega_pass else '✗'}. Ensures volatility alignment."
         })
-      
+       
         # NEW: Open Interest condition
         oi_min = thresholds['volume_min'] * 2 # OI should be at least twice volume min
         oi_pass = open_interest >= oi_min
@@ -1644,20 +1767,20 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'score': oi_score,
             'explanation': f"OI {open_interest:.0f} {'✓' if oi_pass else '✗'} min {oi_min:.0f}. High OI = better liquidity/conviction."
         })
-      
+       
         # NEW: S/R Proximity condition
         sr_proximity_pass = False
         if st.session_state.sr_data:
             # Get S/R levels from the 5min timeframe (most relevant for options trading)
             sr = st.session_state.sr_data.get('5min', {'support': [], 'resistance': []})
-          
+           
             # Find closest support/resistance
             closest_support = max(sr['support']) if sr['support'] else current_price * 0.98
             closest_resistance = min(sr['resistance']) if sr['resistance'] else current_price * 1.02
-          
+           
             strike = float(option['strike'])
             distance_threshold = 0.02 # 2% of current_price
-          
+           
             if side == "call":
                 # For calls, we want near support for a bounce
                 distance_to_level = abs(strike - closest_support)
@@ -1666,7 +1789,7 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
                 # For puts, near resistance for reversal
                 distance_to_level = abs(strike - closest_resistance)
                 sr_proximity_pass = distance_to_level / current_price <= distance_threshold
-          
+           
         sr_score = weights['sr_proximity'] if sr_proximity_pass else 0
         weighted_score += sr_score
         explanations.append({
@@ -1678,38 +1801,38 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'score': sr_score,
             'explanation': f"Strike near {'support' if side == 'call' else 'resistance'} {'✓' if sr_proximity_pass else '✗'}. Improves breakout odds."
         })
-      
+       
         signal = all(passed for passed, desc, val in conditions)
-      
+       
         # Calculate profit targets and other metrics
         profit_target = None
         stop_loss = None
         holding_period = None
         est_hourly_decay = 0.0
         est_remaining_decay = 0.0
-      
+       
         if signal:
             entry_price = option['lastPrice']
             option_type = 'call' if side == 'call' else 'put'
             profit_target = entry_price * (1 + CONFIG['PROFIT_TARGETS'][option_type])
             stop_loss = entry_price * (1 - CONFIG['PROFIT_TARGETS']['stop_loss'])
-          
+           
             # Calculate holding period
             expiry_date = datetime.datetime.strptime(option['expiry'], "%Y-%m-%d").date()
             days_to_expiry = (expiry_date - datetime.date.today()).days
-          
+           
             if days_to_expiry == 0:
                 holding_period = "Intraday (Exit before 3:30 PM)"
             elif days_to_expiry <= 3:
                 holding_period = "1-2 days (Quick scalp)"
             else:
                 holding_period = "3-7 days (Swing trade)"
-          
+           
             if is_0dte and theta:
                 est_hourly_decay = -theta / CONFIG['TRADING_HOURS_PER_DAY']
                 remaining_hours = calculate_remaining_trading_hours()
                 est_remaining_decay = est_hourly_decay * remaining_hours
-      
+       
         return {
             'signal': signal,
             'score': weighted_score,
@@ -1725,13 +1848,14 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'passed_conditions': [exp['condition'] for exp in explanations if exp['passed']],
             'failed_conditions': [exp['condition'] for exp in explanations if not exp['passed']]
         }
-      
+       
     except Exception as e:
         return {'signal': False, 'reason': f'Error in signal generation: {str(e)}', 'score': 0.0, 'explanations': []}
+
 # =============================
 # ENHANCED SENTIMENT ANALYSIS
 # =============================
-@st.cache_data(ttl=3600) # Cache for 1 hour
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_sentiment_score(ticker: str) -> float:
     """Get sentiment score for a ticker using Finnhub API if available, fallback to price action"""
     if CONFIG['FINNHUB_API_KEY']:
@@ -1758,7 +1882,7 @@ def get_sentiment_score(ticker: str) -> float:
             return sentiment
         except Exception as e:
             st.warning(f"Finnhub sentiment error: {str(e)}. Falling back to price action.")
-   
+    
     # Fallback to price action
     try:
         stock = yf.Ticker(ticker)
@@ -1772,29 +1896,32 @@ def get_sentiment_score(ticker: str) -> float:
         return float(sentiment)
     except:
         return 0.0
+
 def process_options_batch(options_df: pd.DataFrame, side: str, stock_df: pd.DataFrame, current_price: float) -> pd.DataFrame:
     """Process options in batches for better performance"""
     if options_df.empty or stock_df.empty:
         return pd.DataFrame()
-  
+   
     try:
         # Add basic validation
         options_df = options_df.copy()
         options_df = options_df[options_df['lastPrice'] > 0]
         options_df = options_df.dropna(subset=['strike', 'lastPrice', 'volume', 'openInterest'])
-      
+       
         if options_df.empty:
             return pd.DataFrame()
-      
+       
         # Add 0DTE flag
         today = datetime.date.today()
         options_df['is_0dte'] = options_df['expiry'].apply(
             lambda x: datetime.datetime.strptime(x, "%Y-%m-%d").date() == today
         )
-      
+       
         # Add moneyness
-        options_df['moneyness'] = options_df['strike'].apply(lambda x: classify_moneyness(x, current_price))
-      
+        options_df['moneyness'] = options_df['strike'].apply(
+            lambda x: classify_moneyness(x, current_price)
+        )
+       
         # Fill missing Greeks
         for idx, row in options_df.iterrows():
             if pd.isna(row.get('delta')) or pd.isna(row.get('gamma')) or pd.isna(row.get('theta')):
@@ -1802,7 +1929,7 @@ def process_options_batch(options_df: pd.DataFrame, side: str, stock_df: pd.Data
                 options_df.loc[idx, 'delta'] = delta
                 options_df.loc[idx, 'gamma'] = gamma
                 options_df.loc[idx, 'theta'] = theta
-          
+           
             # Fill in Vega if missing
             if pd.isna(row.get('vega')):
                 try:
@@ -1812,7 +1939,7 @@ def process_options_batch(options_df: pd.DataFrame, side: str, stock_df: pd.Data
                     options_df.loc[idx, 'vega'] = float(row['lastPrice']) * math.sqrt(dte / 365) * 0.01
                 except:
                     options_df.loc[idx, 'vega'] = 0.1
-      
+       
         # Process signals
         signals = []
         for idx, row in options_df.iterrows():
@@ -1821,25 +1948,26 @@ def process_options_batch(options_df: pd.DataFrame, side: str, stock_df: pd.Data
                 row_dict = row.to_dict()
                 row_dict.update(signal_result)
                 signals.append(row_dict)
-      
+       
         if signals:
             signals_df = pd.DataFrame(signals)
             return signals_df.sort_values('score_percentage', ascending=False)
-      
+       
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Error processing options batch: {str(e)}")
         return pd.DataFrame()
+
 def calculate_scanner_score(stock_df: pd.DataFrame, side: str) -> float:
     """Calculate a score for call/put scanner based on technical indicators"""
     if stock_df.empty:
         return 0.0
-  
+   
     latest = stock_df.iloc[-1]
-  
+   
     score = 0.0
     max_score = 5.0 # Five conditions
-  
+   
     try:
         close = float(latest['Close'])
         ema_9 = float(latest['EMA_9']) if not pd.isna(latest['EMA_9']) else None
@@ -1851,7 +1979,7 @@ def calculate_scanner_score(stock_df: pd.DataFrame, side: str) -> float:
         macd_signal = float(latest['MACD_signal']) if not pd.isna(latest['MACD_signal']) else None
         keltner_upper = float(latest['KC_upper']) if not pd.isna(latest['KC_upper']) else None
         keltner_lower = float(latest['KC_lower']) if not pd.isna(latest['KC_lower']) else None
-      
+       
         if side == "call":
             if ema_9 and ema_20 and close > ema_9 > ema_20:
                 score += 1.0
@@ -1874,16 +2002,17 @@ def calculate_scanner_score(stock_df: pd.DataFrame, side: str) -> float:
                 score += 1.0
             if keltner_lower and close < keltner_lower:
                 score += 1.0
-      
+       
         return (score / max_score) * 100
     except Exception as e:
         st.error(f"Error in scanner score calculation: {str(e)}")
         return 0.0
+
 def create_stock_chart(df: pd.DataFrame, sr_levels: dict = None):
     """Create TradingView-style chart with indicators using Plotly"""
     if df.empty:
         return None
-  
+   
     try:
         fig = make_subplots(
             rows=3, cols=1,
@@ -1892,7 +2021,7 @@ def create_stock_chart(df: pd.DataFrame, sr_levels: dict = None):
             row_heights=[0.6, 0.2, 0.2],
             specs=[[{"secondary_y": True}], [{"secondary_y": False}], [{"secondary_y": False}]]
         )
-      
+       
         # Candlestick chart
         fig.add_trace(
             go.Candlestick(
@@ -1905,37 +2034,37 @@ def create_stock_chart(df: pd.DataFrame, sr_levels: dict = None):
             ),
             row=1, col=1
         )
-      
+       
         # EMAs
         if 'EMA_9' in df.columns and not df['EMA_9'].isna().all():
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['EMA_9'], name='EMA 9', line=dict(color='blue')), row=1, col=1)
         if 'EMA_20' in df.columns and not df['EMA_20'].isna().all():
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['EMA_20'], name='EMA 20', line=dict(color='orange')), row=1, col=1)
-      
+       
         # Keltner Channels
         if 'KC_upper' in df.columns and not df['KC_upper'].isna().all():
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['KC_upper'], name='KC Upper', line=dict(color='red', dash='dash')), row=1, col=1)
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['KC_middle'], name='KC Middle', line=dict(color='green')), row=1, col=1)
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['KC_lower'], name='KC Lower', line=dict(color='red', dash='dash')), row=1, col=1)
-      
+       
         # Volume
         fig.add_trace(
             go.Bar(x=df['Datetime'], y=df['Volume'], name='Volume', marker_color='gray'),
             row=1, col=1, secondary_y=True
         )
-      
+       
         # RSI
         if 'RSI' in df.columns and not df['RSI'].isna().all():
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['RSI'], name='RSI', line=dict(color='purple')), row=2, col=1)
             fig.add_hline(y=70, line_dash="dash", line_color="red", row=2, col=1)
             fig.add_hline(y=30, line_dash="dash", line_color="green", row=2, col=1)
-      
+       
         # MACD
         if 'MACD' in df.columns and not df['MACD'].isna().all():
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['MACD'], name='MACD', line=dict(color='blue')), row=3, col=1)
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['MACD_signal'], name='Signal', line=dict(color='orange')), row=3, col=1)
             fig.add_trace(go.Bar(x=df['Datetime'], y=df['MACD_hist'], name='Histogram', marker_color='gray'), row=3, col=1)
-      
+       
         # Add support and resistance levels if available
         if sr_levels:
             # Add support levels
@@ -1943,13 +2072,13 @@ def create_stock_chart(df: pd.DataFrame, sr_levels: dict = None):
                 if isinstance(level, (int, float)) and not math.isnan(level):
                     fig.add_hline(y=level, line_dash="dash", line_color="green", row=1, col=1,
                                  annotation_text=f"S: {level:.2f}", annotation_position="bottom right")
-          
+           
             # Add resistance levels
             for level in sr_levels.get('5min', {}).get('resistance', []):
                 if isinstance(level, (int, float)) and not math.isnan(level):
                     fig.add_hline(y=level, line_dash="dash", line_color="red", row=1, col=1,
                                  annotation_text=f"R: {level:.2f}", annotation_position="top right")
-      
+       
         fig.update_layout(
             height=800,
             title='Stock Price Chart with Indicators',
@@ -1957,16 +2086,17 @@ def create_stock_chart(df: pd.DataFrame, sr_levels: dict = None):
             showlegend=True,
             template='plotly_dark'
         )
-      
+       
         fig.update_yaxes(title_text="Price", row=1, col=1)
         fig.update_yaxes(title_text="Volume", row=1, col=1, secondary_y=True)
         fig.update_yaxes(title_text="RSI", row=2, col=1)
         fig.update_yaxes(title_text="MACD", row=3, col=1)
-      
+       
         return fig
     except Exception as e:
         st.error(f"Error creating chart: {str(e)}")
         return None
+
 # =============================
 # ENHANCED STREAMLIT INTERFACE
 # =============================
@@ -1983,6 +2113,7 @@ if 'sr_data' not in st.session_state:
     st.session_state.sr_data = {}
 if 'last_ticker' not in st.session_state:
     st.session_state.last_ticker = ""
+
 # Enhanced rate limit check
 if 'rate_limited_until' in st.session_state:
     if time.time() < st.session_state['rate_limited_until']:
@@ -1991,15 +2122,17 @@ if 'rate_limited_until' in st.session_state:
         st.stop()
     else:
         del st.session_state['rate_limited_until']
+
 st.title("📈 Enhanced Options Greeks Analyzer")
 st.markdown("**Performance Optimized** • Weighted Scoring • Smart Caching • Rate Limit Protection")
+
 # Enhanced sidebar
 with st.sidebar:
     st.header("⚙️ Configuration")
-  
+   
     # API Key Section
     st.subheader("🔑 API Settings")
-  
+   
     # Polygon API Key Input
     polygon_api_key = st.text_input("Enter Polygon API Key:", type="password", value=CONFIG['POLYGON_API_KEY'])
     if polygon_api_key:
@@ -2008,56 +2141,56 @@ with st.sidebar:
         st.info("💡 **Tip**: Polygon Premium provides higher rate limits and real-time Greeks")
     else:
         st.warning("⚠️ Using free data sources (limited rate)")
-  
+   
     # NEW: Free API Key Inputs
     st.subheader("🔑 Free API Keys")
     st.info("Use these free alternatives to reduce rate limits")
-  
+   
     CONFIG['ALPHA_VANTAGE_API_KEY'] = st.text_input(
         "Alpha Vantage API Key (free):",
         type="password",
         value=CONFIG['ALPHA_VANTAGE_API_KEY']
     )
-  
+   
     CONFIG['FMP_API_KEY'] = st.text_input(
         "Financial Modeling Prep API Key (free):",
         type="password",
         value=CONFIG['FMP_API_KEY']
     )
-  
+   
     CONFIG['IEX_API_KEY'] = st.text_input(
         "IEX Cloud API Key (free):",
         type="password",
         value=CONFIG['IEX_API_KEY']
     )
-   
+    
     CONFIG['FINNHUB_API_KEY'] = st.text_input(
         "Finnhub API Key (free for sentiment):",
         type="password",
         value=CONFIG['FINNHUB_API_KEY']
     )
-  
+   
     with st.expander("💡 How to get free keys"):
         st.markdown("""
         **1. Alpha Vantage:**
         - Visit [https://www.alphavantage.co/support/#api-key](https://www.alphavantage.co/support/#api-key)
         - Free tier: 5 requests/minute, 500/day
-      
+       
         **2. Financial Modeling Prep:**
         - Visit [https://site.financialmodelingprep.com/developer](https://site.financialmodelingprep.com/developer)
         - Free tier: 250 requests/day
-      
+       
         **3. IEX Cloud:**
         - Visit [https://iexcloud.io/cloud-login#/register](https://iexcloud.io/cloud-login#/register)
         - Free tier: 50,000 credits/month
-      
+       
         **4. Finnhub:**
         - Visit [https://finnhub.io/register](https://finnhub.io/register)
         - Free tier for social sentiment
-       
+        
         **Pro Tip:** Use all three for maximum free requests!
         """)
-  
+   
     # Enhanced auto-refresh with minimum interval enforcement
     with st.container():
         st.subheader("🔄 Smart Auto-Refresh")
@@ -2066,7 +2199,7 @@ with st.sidebar:
             value=st.session_state.auto_refresh_enabled,
             key='auto_refresh_enabled'
         )
-      
+       
         if enable_auto_refresh:
             refresh_options = [60, 120, 300, 600] # Enforced minimum intervals
             refresh_interval = st.selectbox(
@@ -2077,20 +2210,20 @@ with st.sidebar:
                 key='refresh_interval_selector'
             )
             st.session_state.refresh_interval = refresh_interval
-          
+           
             if refresh_interval >= 300:
                 st.success(f"✅ Conservative: {refresh_interval}s interval")
             elif refresh_interval >= 120:
                 st.info(f"⚖️ Balanced: {refresh_interval}s interval")
             else:
                 st.warning(f"⚠️ Aggressive: {refresh_interval}s interval (may hit limits)")
-  
+   
     # Enhanced thresholds with tooltips
     with st.expander("📊 Signal Thresholds & Weights", expanded=False):
         st.markdown("**🏋️ Condition Weights** (How much each factor matters)")
-      
+       
         col1, col2 = st.columns(2)
-      
+       
         with col1:
             st.markdown("#### 📈 Calls")
             SIGNAL_THRESHOLDS['call']['condition_weights']['delta'] = st.slider(
@@ -2128,7 +2261,7 @@ with st.sidebar:
                 help="Market sentiment from social media",
                 key="call_sentiment_weight"
             )
-      
+       
         with col2:
             st.markdown("#### 📉 Puts")
             SIGNAL_THRESHOLDS['put']['condition_weights']['delta'] = st.slider(
@@ -2166,29 +2299,29 @@ with st.sidebar:
                 help="Market sentiment from social media",
                 key="put_sentiment_weight"
             )
-      
+       
         st.markdown("---")
         st.markdown("**⚙️ Base Thresholds**")
-      
+       
         col1, col2 = st.columns(2)
         with col1:
             SIGNAL_THRESHOLDS['call']['delta_base'] = st.slider("Call Delta", 0.1, 1.0, 0.5, 0.1, key="call_delta_base")
             SIGNAL_THRESHOLDS['call']['gamma_base'] = st.slider("Call Gamma", 0.01, 0.2, 0.05, 0.01, key="call_gamma_base")
             SIGNAL_THRESHOLDS['call']['volume_min'] = st.slider("Call Min Volume", 100, 5000, 1000, 100, key="call_vol_min")
-      
+       
         with col2:
             SIGNAL_THRESHOLDS['put']['delta_base'] = st.slider("Put Delta", -1.0, -0.1, -0.5, 0.1, key="put_delta_base")
             SIGNAL_THRESHOLDS['put']['gamma_base'] = st.slider("Put Gamma", 0.01, 0.2, 0.05, 0.01, key="put_gamma_base")
             SIGNAL_THRESHOLDS['put']['volume_min'] = st.slider("Put Min Volume", 100, 5000, 1000, 100, key="put_vol_min")
-  
+   
     # Enhanced profit targets
     with st.expander("🎯 Risk Management", expanded=False):
         CONFIG['PROFIT_TARGETS']['call'] = st.slider("Call Profit Target (%)", 0.05, 0.50, 0.15, 0.01, key="call_profit")
         CONFIG['PROFIT_TARGETS']['put'] = st.slider("Put Profit Target (%)", 0.05, 0.50, 0.15, 0.01, key="put_profit")
         CONFIG['PROFIT_TARGETS']['stop_loss'] = st.slider("Stop Loss (%)", 0.03, 0.20, 0.08, 0.01, key="stop_loss")
-      
+       
         st.info("💡 **Tip**: Higher volatility may require wider targets")
-  
+   
     # Enhanced market status
     with st.container():
         st.subheader("🕐 Market Status")
@@ -2198,20 +2331,20 @@ with st.sidebar:
             st.warning("🟡 PREMARKET")
         else:
             st.info("🔴 Market CLOSED")
-      
+       
         try:
             eastern = pytz.timezone('US/Eastern')
             now = datetime.datetime.now(eastern)
             st.caption(f"**ET**: {now.strftime('%H:%M:%S')}")
         except Exception:
             st.caption("**ET**: N/A")
-      
+       
         # Cache status
         if st.session_state.get('last_refresh'):
             last_update = datetime.datetime.fromtimestamp(st.session_state.last_refresh)
             time_since = int(time.time() - st.session_state.last_refresh)
             st.caption(f"**Cache**: {time_since}s ago")
-  
+   
     # Performance tips
     with st.expander("⚡ Performance Tips"):
         st.markdown("""
@@ -2219,12 +2352,13 @@ with st.sidebar:
         - Data cached for 5 minutes (options) / 5 minutes (stocks)
         - Vectorized signal processing (no slow loops)
         - Async API calls for parallel fetching
-      
+       
         **💰 Cost Reduction:**
         - Wait a few minutes before refreshing again
         - Avoid setting auto-refresh intervals lower than 1 minute
         - Use the app with one ticker at a time to reduce load
         """)
+
     # NEW: Sentiment analysis toggle
     st.subheader("🧠 Sentiment Analysis")
     enable_sentiment = st.checkbox("Enable Market Sentiment Scoring", value=False)
@@ -2232,6 +2366,7 @@ with st.sidebar:
         st.info("✅ Sentiment analysis will be factored into signals")
     else:
         st.info("ℹ️ Sentiment analysis disabled")
+
 # NEW: Create placeholders for real-time metrics
 if 'price_placeholder' not in st.session_state:
     st.session_state.price_placeholder = st.empty()
@@ -2241,12 +2376,13 @@ if 'cache_placeholder' not in st.session_state:
     st.session_state.cache_placeholder = st.empty()
 if 'refresh_placeholder' not in st.session_state:
     st.session_state.refresh_placeholder = st.empty()
+
 # Main interface
 ticker = st.text_input("Enter Stock Ticker (e.g., IWM, SPY, AAPL):", value="IWM").upper()
 if ticker:
     # Enhanced header with metrics
     col1, col2, col3, col4, col5 = st.columns(5)
-  
+   
     with col1:
         st.session_state.status_placeholder = st.empty()
     with col2:
@@ -2257,11 +2393,11 @@ if ticker:
         st.session_state.refresh_placeholder = st.empty()
     with col5:
         manual_refresh = st.button("🔄 Refresh", key="manual_refresh")
-  
+   
     # Update real-time metrics
     current_price = get_current_price(ticker)
     cache_age = int(time.time() - st.session_state.get('last_refresh', 0))
-  
+   
     # Update placeholders
     if is_market_open():
         st.session_state.status_placeholder.success("🟢 OPEN")
@@ -2269,15 +2405,15 @@ if ticker:
         st.session_state.status_placeholder.warning("🟡 PRE")
     else:
         st.session_state.status_placeholder.info("🔴 CLOSED")
-  
+   
     if current_price > 0:
         st.session_state.price_placeholder.metric("Price", f"${current_price:.2f}")
     else:
         st.session_state.price_placeholder.error("❌ Price Error")
-  
+   
     st.session_state.cache_placeholder.metric("Cache Age", f"{cache_age}s")
     st.session_state.refresh_placeholder.metric("Refreshes", st.session_state.refresh_counter)
-  
+   
     if manual_refresh:
         st.cache_data.clear()
         st.session_state.last_refresh = time.time()
@@ -2292,7 +2428,7 @@ if ticker:
             except Exception as e:
                 st.error(f"Error in S/R analysis: {str(e)}")
                 st.session_state.sr_data = {}
-  
+   
     # Enhanced tabs
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "🎯 Enhanced Signals",
@@ -2302,20 +2438,20 @@ if ticker:
         "📰 Market Context",
         "📊 Free Tier Usage"
     ])
-  
+   
     with tab1:
         try:
             with st.spinner("🔄 Loading enhanced analysis..."):
                 # Get stock data with indicators (cached)
                 df = get_stock_data_with_indicators(ticker)
-              
+               
                 if df.empty:
                     st.error("❌ Unable to fetch stock data. Please check ticker or wait for rate limits.")
                     st.stop()
-              
+               
                 current_price = df.iloc[-1]['Close']
                 st.success(f"✅ **{ticker}** - ${current_price:.2f}")
-              
+               
                 # Volatility assessment
                 atr_pct = df.iloc[-1].get('ATR_pct', 0)
                 if not pd.isna(atr_pct):
@@ -2330,60 +2466,60 @@ if ticker:
                     elif atr_pct > CONFIG['VOLATILITY_THRESHOLDS']['low']:
                         vol_status = "Medium"
                         vol_color = "🟠"
-                  
+                   
                     st.info(f"{vol_color} **Volatility**: {atr_pct*100:.2f}% ({vol_status}) - Thresholds auto-adjust")
-              
+               
                 # Get full options chain with real data priority and proper UI handling
                 with st.spinner("📥 Fetching REAL options data..."):
                     expiries, all_calls, all_puts = get_full_options_chain(ticker)
-              
+               
                 # Handle the results and show UI controls outside of cached functions
                 if not expiries:
                     st.error("❌ Unable to fetch real options data")
-                  
+                   
                     # Check rate limit status
                     rate_limited = False
                     remaining_time = 0
                     if 'yf_rate_limited_until' in st.session_state:
                         remaining_time = max(0, int(st.session_state['yf_rate_limited_until'] - time.time()))
                         rate_limited = remaining_time > 0
-                  
+                   
                     with st.expander("💡 Solutions for Real Data", expanded=True):
                         st.markdown("""
                         **🔧 To get real options data:**
-                      
+                       
                         1. **Wait and Retry**: Rate limits typically reset in 3-5 minutes
                         2. **Try Different Time**: Options data is more available during market hours
                         3. **Use Popular Tickers**: SPY, QQQ, AAPL often have better access
                         4. **Premium Data Sources**: Consider paid APIs for reliable access
-                      
+                       
                         **⏰ Rate Limit Management:**
                         - Yahoo Finance limits options requests heavily
                         - Limits are per IP address and reset periodically
                         - Try again in a few minutes
                         """)
-                      
+                       
                         if rate_limited:
                             st.warning(f"⏳ Currently rate limited for {remaining_time} more seconds")
                         else:
                             st.info("✅ No active rate limits detected")
-                      
+                       
                         col1, col2, col3 = st.columns(3)
-                      
+                       
                         with col1:
                             if st.button("🔄 Clear Rate Limit & Retry", help="Clear rate limit status and try again"):
                                 clear_rate_limit()
-                      
+                       
                         with col2:
                             if st.button("⏰ Force Retry Now", help="Attempt to fetch data regardless of rate limit"):
                                 if 'yf_rate_limited_until' in st.session_state:
                                     del st.session_state['yf_rate_limited_until']
                                 st.cache_data.clear()
                                 st.rerun()
-                      
+                       
                         with col3:
                             show_demo = st.button("📊 Show Demo Data", help="Use demo data for testing interface")
-                  
+                   
                     if show_demo:
                         st.session_state.force_demo = True
                         st.warning("⚠️ **DEMO DATA ONLY** - For testing the app interface")
@@ -2392,7 +2528,7 @@ if ticker:
                         # Suggest using other tabs
                         st.info("💡 **Alternative**: Use Technical Analysis or Support/Resistance tabs (work without options data)")
                         st.stop()
-              
+               
                 # Only proceed if we have data (real or explicitly chosen demo)
                 if expiries:
                     if st.session_state.get('force_demo', False):
@@ -2401,7 +2537,7 @@ if ticker:
                         st.success(f"✅ **REAL OPTIONS DATA** loaded: {len(all_calls)} calls, {len(all_puts)} puts")
                 else:
                     st.stop()
-              
+               
                 # Expiry selection
                 col1, col2 = st.columns(2)
                 with col1:
@@ -2411,7 +2547,7 @@ if ticker:
                         index=1,
                         help="0DTE = Same day expiry, This Week = Within 7 days"
                     )
-              
+               
                 today = datetime.date.today()
                 if expiry_mode == "0DTE Only":
                     expiries_to_use = [e for e in expiries if datetime.datetime.strptime(e, "%Y-%m-%d").date() == today]
@@ -2420,20 +2556,20 @@ if ticker:
                     expiries_to_use = [e for e in expiries if today <= datetime.datetime.strptime(e, "%Y-%m-%d").date() <= week_end]
                 else:
                     expiries_to_use = expiries[:5] # Reduced from 8 to 5 expiries
-              
+               
                 if not expiries_to_use:
                     st.warning(f"⚠️ No expiries available for {expiry_mode} mode.")
                     st.stop()
-              
+               
                 with col2:
                     st.info(f"📊 Analyzing **{len(expiries_to_use)}** expiries")
                     if expiries_to_use:
                         st.caption(f"Range: {expiries_to_use[0]} to {expiries_to_use[-1]}")
-              
+               
                 # Filter options by expiry
                 calls_filtered = all_calls[all_calls['expiry'].isin(expiries_to_use)].copy()
                 puts_filtered = all_puts[all_puts['expiry'].isin(expiries_to_use)].copy()
-              
+               
                 # Strike range filter
                 strike_range = st.slider(
                     "🎯 Strike Range Around Current Price ($):",
@@ -2442,7 +2578,7 @@ if ticker:
                 )
                 min_strike = current_price + strike_range[0]
                 max_strike = current_price + strike_range[1]
-              
+               
                 calls_filtered = calls_filtered[
                     (calls_filtered['strike'] >= min_strike) &
                     (calls_filtered['strike'] <= max_strike)
@@ -2451,17 +2587,33 @@ if ticker:
                     (puts_filtered['strike'] >= min_strike) &
                     (puts_filtered['strike'] <= max_strike)
                 ].copy()
-              
+               
+                # Moneyness filter
+                m_filter = st.multiselect(
+                    "💰 Moneyness Filter:",
+                    options=["ITM", "NTM", "ATM", "OTM"],
+                    default=["NTM", "ATM"],
+                    help="ATM=At-the-money, NTM=Near-the-money, ITM=In-the-money, OTM=Out-of-the-money"
+                )
+               
+                if not calls_filtered.empty:
+                    calls_filtered['moneyness'] = calls_filtered['strike'].apply(lambda x: classify_moneyness(x, current_price))
+                    calls_filtered = calls_filtered[calls_filtered['moneyness'].isin(m_filter)]
+               
+                if not puts_filtered.empty:
+                    puts_filtered['moneyness'] = puts_filtered['strike'].apply(lambda x: classify_moneyness(x, current_price))
+                    puts_filtered = puts_filtered[puts_filtered['moneyness'].isin(m_filter)]
+               
                 st.write(f"🔍 **Filtered Options**: {len(calls_filtered)} calls, {len(puts_filtered)} puts")
-              
+               
                 # Process signals using enhanced batch processing
                 col1, col2 = st.columns(2)
-              
+               
                 with col1:
                     st.subheader("📈 Enhanced Call Signals")
                     if not calls_filtered.empty:
                         call_signals_df = process_options_batch(calls_filtered, "call", df, current_price)
-                      
+                       
                         if not call_signals_df.empty:
                             # Display top signals with enhanced info
                             display_cols = [
@@ -2471,7 +2623,7 @@ if ticker:
                                 'holding_period', 'is_0dte'
                             ]
                             available_cols = [col for col in display_cols if col in call_signals_df.columns]
-                          
+                           
                             # Rename columns for better display
                             display_df = call_signals_df[available_cols].copy()
                             display_df = display_df.rename(columns={
@@ -2481,13 +2633,13 @@ if ticker:
                                 'holding_period': 'Hold Period',
                                 'is_0dte': '0DTE'
                             })
-                          
+                           
                             st.dataframe(
                                 display_df.round(3),
                                 use_container_width=True,
                                 hide_index=True
                             )
-                          
+                           
                             # Add CSV export
                             csv = call_signals_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
@@ -2496,12 +2648,12 @@ if ticker:
                                 file_name=f"{ticker}_call_signals.csv",
                                 mime="text/csv"
                             )
-                          
+                           
                             # Enhanced success message with stats
                             avg_score = call_signals_df['score_percentage'].mean()
                             top_score = call_signals_df['score_percentage'].max()
                             st.success(f"✅ **{len(call_signals_df)} call signals** | Avg: {avg_score:.1f}% | Best: {top_score:.1f}%")
-                          
+                           
                             # Show best signal details
                             if len(call_signals_df) > 0:
                                 best_call = call_signals_df.iloc[0]
@@ -2524,12 +2676,12 @@ if ticker:
                             st.caption("💡 Try adjusting strike range, moneyness filter, or threshold weights")
                     else:
                         st.info("ℹ️ No call options available for selected filters.")
-              
+               
                 with col2:
                     st.subheader("📉 Enhanced Put Signals")
                     if not puts_filtered.empty:
                         put_signals_df = process_options_batch(puts_filtered, "put", df, current_price)
-                      
+                       
                         if not put_signals_df.empty:
                             # Display top signals with enhanced info
                             display_cols = [
@@ -2539,7 +2691,7 @@ if ticker:
                                 'holding_period', 'is_0dte'
                             ]
                             available_cols = [col for col in display_cols if col in put_signals_df.columns]
-                          
+                           
                             # Rename columns for better display
                             display_df = put_signals_df[available_cols].copy()
                             display_df = display_df.rename(columns={
@@ -2549,13 +2701,13 @@ if ticker:
                                 'holding_period': 'Hold Period',
                                 'is_0dte': '0DTE'
                             })
-                          
+                           
                             st.dataframe(
                                 display_df.round(3),
                                 use_container_width=True,
                                 hide_index=True
                             )
-                          
+                           
                             # Add CSV export
                             csv = put_signals_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
@@ -2564,12 +2716,12 @@ if ticker:
                                 file_name=f"{ticker}_put_signals.csv",
                                 mime="text/csv"
                             )
-                          
+                           
                             # Enhanced success message with stats
                             avg_score = put_signals_df['score_percentage'].mean()
                             top_score = put_signals_df['score_percentage'].max()
                             st.success(f"✅ **{len(put_signals_df)} put signals** | Avg: {avg_score:.1f}% | Best: {top_score:.1f}%")
-                          
+                           
                             # Show best signal details
                             if len(put_signals_df) > 0:
                                 best_put = put_signals_df.iloc[0]
@@ -2592,43 +2744,43 @@ if ticker:
                             st.caption("💡 Try adjusting strike range, moneyness filter, or threshold weights")
                     else:
                         st.info("ℹ️ No put options available for selected filters.")
-              
+               
                 # Enhanced scanner scores
                 call_score = calculate_scanner_score(df, 'call')
                 put_score = calculate_scanner_score(df, 'put')
-              
+               
                 st.markdown("---")
                 st.subheader("🧠 Technical Scanner Scores")
-              
+               
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     score_color = "🟢" if call_score >= 70 else "🟡" if call_score >= 40 else "🔴"
                     st.metric("📈 Call Scanner", f"{call_score:.1f}%", help="Based on bullish technical indicators")
                     st.caption(f"{score_color} {'Strong' if call_score >= 70 else 'Moderate' if call_score >= 40 else 'Weak'} bullish setup")
-              
+               
                 with col2:
                     score_color = "🟢" if put_score >= 70 else "🟡" if put_score >= 40 else "🔴"
                     st.metric("📉 Put Scanner", f"{put_score:.1f}%", help="Based on bearish technical indicators")
                     st.caption(f"{score_color} {'Strong' if put_score >= 70 else 'Moderate' if put_score >= 40 else 'Weak'} bearish setup")
-              
+               
                 with col3:
                     directional_bias = "Bullish" if call_score > put_score else "Bearish" if put_score > call_score else "Neutral"
                     bias_strength = abs(call_score - put_score)
                     st.metric("🎯 Directional Bias", directional_bias)
                     st.caption(f"Strength: {bias_strength:.1f}% difference")
-              
+               
         except Exception as e:
             st.error(f"❌ Error in signal analysis: {str(e)}")
             st.error("Please try refreshing or check your ticker symbol.")
-  
+   
     with tab2:
         try:
             if 'df' not in locals():
                 df = get_stock_data_with_indicators(ticker)
-          
+           
             if not df.empty:
                 st.subheader("📊 Technical Analysis Dashboard")
-              
+               
                 # Market session indicator
                 if is_premarket():
                     st.info("🔔 Currently showing PREMARKET data")
@@ -2636,15 +2788,15 @@ if ticker:
                     st.info("🔔 Showing AFTER-HOURS data")
                 else:
                     st.success("🔔 Showing REGULAR HOURS data")
-              
+               
                 latest = df.iloc[-1]
-              
+               
                 # Enhanced metrics display
                 col1, col2, col3, col4, col5, col6 = st.columns(6)
-              
+               
                 with col1:
                     st.metric("Current Price", f"${latest['Close']:.2f}")
-              
+               
                 with col2:
                     ema_9 = latest['EMA_9']
                     if not pd.isna(ema_9):
@@ -2652,7 +2804,7 @@ if ticker:
                         st.metric("EMA 9", f"${ema_9:.2f} {trend_9}")
                     else:
                         st.metric("EMA 9", "N/A")
-              
+               
                 with col3:
                     ema_20 = latest['EMA_20']
                     if not pd.isna(ema_20):
@@ -2660,7 +2812,7 @@ if ticker:
                         st.metric("EMA 20", f"${ema_20:.2f} {trend_20}")
                     else:
                         st.metric("EMA 20", "N/A")
-              
+               
                 with col4:
                     rsi = latest['RSI']
                     if not pd.isna(rsi):
@@ -2668,7 +2820,7 @@ if ticker:
                         st.metric("RSI", f"{rsi:.1f} {rsi_status}")
                     else:
                         st.metric("RSI", "N/A")
-              
+               
                 with col5:
                     atr_pct = latest['ATR_pct']
                     if not pd.isna(atr_pct):
@@ -2676,34 +2828,34 @@ if ticker:
                         st.metric("Volatility", f"{atr_pct*100:.2f}% {vol_emoji}")
                     else:
                         st.metric("Volatility", "N/A")
-              
+               
                 with col6:
                     volume_ratio = latest['Volume'] / latest['avg_vol'] if not pd.isna(latest['avg_vol']) else 1
                     vol_emoji = "🚀" if volume_ratio > 2 else "📈" if volume_ratio > 1.5 else "📊"
                     st.metric("Volume Ratio", f"{volume_ratio:.1f}x {vol_emoji}")
-              
+               
                 # Recent data table with enhanced formatting
                 st.subheader("📋 Recent Market Data")
                 display_df = df.tail(10)[['Datetime', 'Close', 'EMA_9', 'EMA_20', 'RSI', 'VWAP', 'ATR_pct', 'Volume', 'avg_vol']].copy()
-              
+               
                 if 'ATR_pct' in display_df.columns:
                     display_df['ATR_pct'] = display_df['ATR_pct'] * 100
-              
+               
                 display_df['Volume Ratio'] = display_df['Volume'] / display_df['avg_vol']
                 display_df = display_df.round(2)
-              
+               
                 # Format datetime for better readability
                 display_df['Time'] = display_df['Datetime'].dt.strftime('%H:%M')
-              
+               
                 final_cols = ['Time', 'Close', 'EMA_9', 'EMA_20', 'RSI', 'VWAP', 'ATR_pct', 'Volume Ratio']
                 available_final_cols = [col for col in final_cols if col in display_df.columns]
-              
+               
                 st.dataframe(
                     display_df[available_final_cols].rename(columns={'ATR_pct': 'ATR%'}),
                     use_container_width=True,
                     hide_index=True
                 )
-              
+               
                 # Enhanced interactive chart
                 st.subheader("📈 Interactive Price Chart")
                 chart_fig = create_stock_chart(df, st.session_state.sr_data)
@@ -2711,14 +2863,14 @@ if ticker:
                     st.plotly_chart(chart_fig, use_container_width=True)
                 else:
                     st.warning("⚠️ Unable to create chart. Chart data may be insufficient.")
-              
+               
         except Exception as e:
             st.error(f"❌ Error in Technical Analysis: {str(e)}")
-  
+   
     with tab3:
         st.subheader("📈 Multi-Timeframe Support/Resistance Analysis")
         st.info("Key levels for options trading strategies. Scalping: 1min/5min | Intraday: 15min/30min/1h")
-      
+       
         if not st.session_state.sr_data:
             st.warning("No support/resistance data available. Please try refreshing.")
         else:
@@ -2726,10 +2878,10 @@ if ticker:
             sr_fig = plot_sr_levels_enhanced(st.session_state.sr_data, current_price)
             if sr_fig:
                 st.plotly_chart(sr_fig, use_container_width=True)
-          
+           
             # Display detailed levels
             st.subheader("Detailed Levels by Timeframe")
-          
+           
             # Scalping timeframes
             st.markdown("#### 🚀 Scalping Timeframes (Short-Term Trades)")
             col1, col2 = st.columns(2)
@@ -2738,17 +2890,17 @@ if ticker:
                     sr = st.session_state.sr_data['1min']
                     st.markdown("**1 Minute**")
                     st.markdown(f"Sensitivity: {sr['sensitivity']*100:.2f}%")
-                  
+                   
                     st.markdown("**Support Levels**")
                     for level in sr['support']:
                         distance = abs(level - current_price) / current_price * 100
                         st.markdown(f"- ${level:.2f} ({distance:.1f}% away)")
-                  
+                   
                     st.markdown("**Resistance Levels**")
                     for level in sr['resistance']:
                         distance = abs(level - current_price) / current_price * 100
                         st.markdown(f"- ${level:.2f} ({distance:.1f}% away)")
-          
+           
             # Trading strategy guidance
             st.subheader("📝 Trading Strategy Guidance")
             with st.expander("How to use support/resistance for options trading", expanded=True):
@@ -2758,60 +2910,60 @@ if ticker:
                 - Look for options with strikes near key levels for breakout plays
                 - Combine with high delta options for directional plays
                 - Ideal for 0DTE or same-day expiration options
-              
+               
                 **Intraday Strategies (15min/1h levels):**
                 - Use for swing trades (hours to days)
                 - Look for options with strikes between support/resistance levels for range-bound strategies
                 - Combine with technical indicators for confirmation
                 - Ideal for weekly expiration options
-              
+               
                 **General Tips:**
                 1. **Breakout Trading**: Buy calls when price breaks above resistance, puts when below support
                 2. **Bounce Trading**: Buy calls near support, puts near resistance
                 3. **Range Trading**: Sell options when price is between support/resistance
                 4. **Straddles/Strangles**: Use when expecting volatility breakout
                 """)
-  
+   
     with tab4:
         st.subheader("🔍 Signal Explanations & Methodology")
-      
+       
         # Show current configuration
         st.markdown("### ⚙️ Current Configuration")
-      
+       
         col1, col2 = st.columns(2)
-      
+       
         with col1:
             st.markdown("**📈 Call Signal Weights**")
             call_weights = SIGNAL_THRESHOLDS['call']['condition_weights']
             for condition, weight in call_weights.items():
                 st.write(f"• {condition.title()}: {weight:.1%}")
-          
+           
             st.markdown("**🎯 Profit Targets**")
             st.write(f"• Call Target: {CONFIG['PROFIT_TARGETS']['call']:.1%}")
             st.write(f"• Put Target: {CONFIG['PROFIT_TARGETS']['put']:.1%}")
             st.write(f"• Stop Loss: {CONFIG['PROFIT_TARGETS']['stop_loss']:.1%}")
-      
+       
         with col2:
             st.markdown("**📉 Put Signal Weights**")
             put_weights = SIGNAL_THRESHOLDS['put']['condition_weights']
             for condition, weight in put_weights.items():
                 st.write(f"• {condition.title()}: {weight:.1%}")
-          
+           
             st.markdown("**⏱️ Cache Settings**")
             st.write(f"• Options Cache: {CONFIG['CACHE_TTL']}s")
             st.write(f"• Stock Cache: {CONFIG['STOCK_CACHE_TTL']}s")
             st.write(f"• Min Refresh: {CONFIG['MIN_REFRESH_INTERVAL']}s")
-      
+       
         # Methodology explanation
         st.markdown("### 🧠 Signal Methodology")
-      
+       
         with st.expander("📊 How Signals Are Generated", expanded=True):
             st.markdown("""
             **🏋️ Weighted Scoring System:**
             - Each condition gets a weight (importance factor)
             - Final score = sum of (condition_passed × weight)
             - Scores range from 0-100%
-          
+           
             **📈 Call Signal Conditions:**
             1. **Delta** ≥ threshold (price sensitivity)
             2. **Gamma** ≥ threshold (acceleration potential)
@@ -2823,7 +2975,7 @@ if ticker:
             8. **Open Interest**: OI > 2× volume min (liquidity/conviction)
             9. **S/R Proximity**: Strike near support (improves breakout odds)
             10. **Sentiment**: Positive social sentiment
-          
+           
             **📉 Put Signal Conditions:**
             1. **Delta** ≤ threshold (negative price sensitivity)
             2. **Gamma** ≥ threshold (acceleration potential)
@@ -2836,54 +2988,53 @@ if ticker:
             9. **S/R Proximity**: Strike near resistance (improves reversal odds)
             10. **Sentiment**: Negative social sentiment
             """)
-      
+       
         with st.expander("🎯 Dynamic Threshold Adjustments", expanded=False):
             st.markdown("""
             **📊 Volatility Adjustments:**
             - Higher volatility → Higher delta requirements
             - Higher volatility → Higher gamma requirements
             - Volatility measured by ATR% (Average True Range)
-          
+           
             **🕐 Market Condition Adjustments:**
             - **Premarket/Early Market**: Lower volume requirements, higher delta requirements
             - **0DTE Options**: Higher delta requirements, lower gamma requirements
             - **High Volatility**: All thresholds scale up proportionally
-          
+           
             **⏳ DTE & Moneyness Adjustments:**
             - **0DTE/1DTE**: Boost gamma requirements, tighten theta tolerance
             - **Longer-term**: Lower gamma requirements, more theta tolerance
             - **ATM Options**: Require higher gamma
             - **OTM Options**: Require higher volume/OI for conviction
-          
+           
             **💡 Why Dynamic Thresholds:**
             - Static thresholds fail in changing market conditions
             - Volatile markets need higher Greeks for same profit potential
             - Different market sessions have different liquidity characteristics
             """)
-      
+       
         with st.expander("⚡ Performance Optimizations", expanded=False):
             st.markdown("""
             **🚀 Speed Improvements:**
-            - **2x Faster**: Smart caching reduces API calls by 60%
-            - **Rate Limit Protection**: Exponential backoff with 5 retries
-            - **Batch Processing**: Vectorized operations eliminate slow loops
-            - **Combined Functions**: Stock data + indicators computed together
-     
+            - **SmartCaching**: Options cached for 5 min, stocks for 5 min
+            - Batch processing: Vectorized operations instead of slow loops
+            - Async API calls: Parallel fetching from multiple sources
+           
             **💰 Cost Reduction:**
             - Full chain caching: Fetch all expiries once, filter locally
             - Conservative defaults: 120s refresh intervals prevent overuse
-            - Fallback logic: Yahoo Finance backup when needed
-          
+            - Fallback logic: Yahoo Finance backup when Polygon unavailable
+           
             **📊 Better Analysis:**
             - Weighted scoring: Most important factors weighted highest
             - Detailed explanations: See exactly why signals pass/fail
             - Multiple timeframes: 0DTE, weekly, monthly analysis
             """)
-      
+       
         # Performance metrics
         if st.session_state.get('refresh_counter', 0) > 0:
             st.markdown("### 📈 Session Performance")
-          
+           
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("Total Refreshes", st.session_state.refresh_counter)
@@ -2893,27 +3044,27 @@ if ticker:
             with col3:
                 cache_hit_rate = 85 # Estimated based on caching strategy
                 st.metric("Est. Cache Hit Rate", f"{cache_hit_rate}%")
-  
+   
     with tab5:
         st.subheader("📰 Market Context & News")
-      
+       
         try:
             # Company info section
             stock = yf.Ticker(ticker)
-          
+           
             # Basic company information
             with st.expander("🏢 Company Overview", expanded=True):
                 try:
                     info = stock.info
                     if info:
                         col1, col2, col3, col4 = st.columns(4)
-                      
+                       
                         with col1:
                             if 'longName' in info:
                                 st.write(f"**Company**: {info['longName']}")
                             if 'sector' in info:
                                 st.write(f"**Sector**: {info['sector']}")
-                      
+                       
                         with col2:
                             if 'marketCap' in info and info['marketCap']:
                                 market_cap = info['marketCap']
@@ -2923,13 +3074,13 @@ if ticker:
                                     st.write(f"**Market Cap**: ${market_cap/1e9:.2f}B")
                                 else:
                                     st.write(f"**Market Cap**: ${market_cap/1e6:.2f}M")
-                      
+                       
                         with col3:
                             if 'beta' in info and info['beta']:
                                 st.write(f"**Beta**: {info['beta']:.2f}")
                             if 'trailingPE' in info and info['trailingPE']:
                                 st.write(f"**P/E Ratio**: {info['trailingPE']:.2f}")
-                      
+                       
                         with col4:
                             if 'averageVolume' in info:
                                 avg_vol = info['averageVolume']
@@ -2939,7 +3090,7 @@ if ticker:
                                     st.write(f"**Avg Volume**: {avg_vol/1e3:.0f}K")
                 except Exception as e:
                     st.warning(f"⚠️ Company info unavailable: {str(e)}")
-          
+           
             # Recent news
             with st.expander("📰 Recent News", expanded=False):
                 try:
@@ -2950,7 +3101,7 @@ if ticker:
                             publisher = item.get('publisher', 'Unknown')
                             link = item.get('link', '#')
                             summary = item.get('summary', 'No summary available')
-                          
+                           
                             # Format publish time
                             publish_time = item.get('providerPublishTime', 'Unknown')
                             if isinstance(publish_time, (int, float)):
@@ -2958,7 +3109,7 @@ if ticker:
                                     publish_time = datetime.datetime.fromtimestamp(publish_time).strftime('%Y-%m-%d %H:%M')
                                 except:
                                     publish_time = 'Unknown'
-                          
+                           
                             st.markdown(f"**{i+1}. {title}**")
                             st.write(f"📅 {publish_time} | 📰 {publisher}")
                             if link != '#':
@@ -2969,7 +3120,7 @@ if ticker:
                         st.info("ℹ️ No recent news available")
                 except Exception as e:
                     st.warning(f"⚠️ News unavailable: {str(e)}")
-          
+           
             # Upcoming events/earnings
             with st.expander("📅 Upcoming Events", expanded=False):
                 try:
@@ -2980,7 +3131,7 @@ if ticker:
                         st.info("ℹ️ No upcoming events scheduled")
                 except Exception as e:
                     st.warning(f"⚠️ Calendar unavailable: {str(e)}")
-          
+           
             # Market context
             with st.expander("🎯 Trading Context", expanded=True):
                 st.markdown("""
@@ -2988,91 +3139,91 @@ if ticker:
                 - Check VIX levels for overall market fear/greed
                 - Monitor major indices (SPY, QQQ, IWM) for directional bias
                 - Watch for economic events that could impact volatility
-              
+               
                 **⚠️ Risk Considerations:**
                 - Options lose value due to time decay (theta)
                 - High volatility can increase option prices rapidly
                 - Earnings announcements create significant price movements
                 - Market holidays affect option expiration schedules
-              
+               
                 **💡 Best Practices:**
                 - Never risk more than you can afford to lose
                 - Use stop losses to limit downside
                 - Take profits when targets are reached
                 - Avoid holding 0DTE options into close
                 """)
-              
+               
                 # Add market warnings based on conditions
                 if is_premarket():
                     st.warning("⚠️ **PREMARKET TRADING**: Lower liquidity, wider spreads expected")
                 elif not is_market_open():
                     st.info("ℹ️ **MARKET CLOSED**: Signals based on last session data")
-              
+               
                 # Add volatility warnings
                 if 'df' in locals() and not df.empty:
                     latest_atr = df.iloc[-1].get('ATR_pct', 0)
                     if not pd.isna(latest_atr) and latest_atr > CONFIG['VOLATILITY_THRESHOLDS']['high']:
                         st.warning("🌪️ **HIGH VOLATILITY**: Increased risk and opportunity. Use wider stops.")
-      
+       
         except Exception as e:
             st.error(f"❌ Error loading market context: {str(e)}")
-  
+   
     with tab6:
         st.subheader("📰 Free Tier Usage Dashboard")
-      
+       
         if not st.session_state.API_CALL_LOG:
             st.info("No API calls recorded yet")
         else:
             now = time.time()
-          
+           
             # Calculate usage
             av_usage_1min = len([t for t in st.session_state.API_CALL_LOG
                                 if t['source'] == "ALPHA_VANTAGE" and now - t['timestamp'] < 60])
             av_usage_1hr = len([t for t in st.session_state.API_CALL_LOG
                                if t['source'] == "ALPHA_VANTAGE" and now - t['timestamp'] < 3600])
-          
+           
             fmp_usage_1hr = len([t for t in st.session_state.API_CALL_LOG
                                 if t['source'] == "FMP" and now - t['timestamp'] < 3600])
             fmp_usage_24hr = len([t for t in st.session_state.API_CALL_LOG
                                  if t['source'] == "FMP" and now - t['timestamp'] < 86400])
-          
+           
             iex_usage_1hr = len([t for t in st.session_state.API_CALL_LOG
                                 if t['source'] == "IEX" and now - t['timestamp'] < 3600])
             iex_usage_24hr = len([t for t in st.session_state.API_CALL_LOG
                                  if t['source'] == "IEX" and now - t['timestamp'] < 86400])
-         
+          
             # Display gauges
             col1, col2, col3 = st.columns(3)
-         
+          
             with col1:
                 st.subheader("Alpha Vantage")
                 st.metric("Last Minute", f"{av_usage_1min}/5", "per minute")
                 st.metric("Last Hour", f"{av_usage_1hr}/300", "per hour")
                 st.progress(min(1.0, av_usage_1min/5), text=f"{min(100, av_usage_1min/5*100):.0f}% of minute limit")
-         
+          
             with col2:
                 st.subheader("Financial Modeling Prep")
                 st.metric("Last Hour", f"{fmp_usage_1hr}/10", "per hour")
                 st.metric("Last 24 Hours", f"{fmp_usage_24hr}/250", "per day")
                 st.progress(min(1.0, fmp_usage_1hr/10), text=f"{min(100, fmp_usage_1hr/10*100):.0f}% of hourly limit")
-         
+          
             with col3:
                 st.subheader("IEX Cloud")
                 st.metric("Last Hour", f"{iex_usage_1hr}/69", "per hour")
                 st.metric("Last 24 Hours", f"{iex_usage_24hr}/1667", "per day")
                 st.progress(min(1.0, iex_usage_1hr/69), text=f"{min(100, iex_usage_1hr/69*100):.0f}% of hourly limit")
-         
+          
             # Usage history chart
             st.subheader("Usage History")
-         
+          
             # Create a DataFrame for visualization
             log_df = pd.DataFrame(st.session_state.API_CALL_LOG)
             log_df['timestamp'] = pd.to_datetime(log_df['timestamp'], unit='s')
             log_df['time'] = log_df['timestamp'].dt.floor('min')
-         
+          
             # Group by source and time
             usage_df = log_df.groupby(['source', pd.Grouper(key='time', freq='5min')]).size().unstack(fill_value=0)
-         
+          
             # Fill missing time periods
             if not usage_df.empty:
                 all_times = pd.date_range(
@@ -3081,7 +3232,7 @@ if ticker:
                     freq='5min'
                 )
                 usage_df = usage_df.reindex(all_times, axis=1, fill_value=0)
-             
+              
                 # Plot
                 fig = go.Figure()
                 for source in usage_df.index:
@@ -3092,7 +3243,7 @@ if ticker:
                         name=source,
                         stackgroup='one'
                     ))
-             
+              
                 fig.update_layout(
                     title='API Calls Over Time',
                     xaxis_title='Time',
@@ -3103,12 +3254,13 @@ if ticker:
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No API calls recorded in the selected time range")
-         
+          
             st.info("💡 Usage resets over time. Add more free API keys to increase capacity")
+
 else:
     # Enhanced welcome screen
     st.info("👋 **Welcome!** Enter a stock ticker above to begin enhanced options analysis.")
- 
+  
     with st.expander("🚀 What's New in Enhanced Version", expanded=True):
         st.markdown("""
         **⚡ Performance Improvements:**
@@ -3116,32 +3268,32 @@ else:
         - **Rate Limit Protection**: Exponential backoff with 5 retries
         - **Batch Processing**: Vectorized operations eliminate slow loops
         - **Combined Functions**: Stock data + indicators computed together
-     
+      
         **📊 Enhanced Signals:**
         - **Weighted Scoring**: Most important factors weighted highest (0-100%)
         - **Dynamic Thresholds**: Auto-adjust based on volatility and market conditions
         - **Detailed Explanations**: See exactly why each signal passes or fails
         - **Better Filtering**: Moneyness, expiry, and strike range controls
-     
+      
         **🎯 New Features:**
         - **Multi-Timeframe Support/Resistance**: 1min/5min for scalping, 15min/30min/1h for intraday
         - **Free Tier API Integration**: Alpha Vantage, FMP, IEX Cloud
         - **Usage Dashboard**: Track API consumption across services
         - **Professional UX**: Color-coded metrics, tooltips, and guidance
-     
+      
         **💰 Cost Optimization:**
         - **Conservative Defaults**: 120s refresh intervals prevent overuse
         - **Polygon Integration**: Premium data with higher rate limits
         - **Fallback Logic**: Yahoo Finance backup when needed
         - **Usage Analytics**: Track refresh patterns and optimize costs
-     
+      
         **🔧 Fixed Support/Resistance:**
         - **Proper Level Alignment**: Support below price, resistance above
         - **Dynamic Sensitivity**: Adjusts to volatility automatically
         - **Enhanced Peak Detection**: Uses scipy when available
         - **Strength-Based Clustering**: More relevant levels prioritized
         """)
- 
+  
     with st.expander("📚 Quick Start Guide", expanded=False):
         st.markdown("""
         **🏁 Getting Started:**
@@ -3150,42 +3302,46 @@ else:
         3. **Select Filters**: Choose expiry mode and strike range
         4. **Review Signals**: Check enhanced signals with weighted scores
         5. **Understand Context**: Read explanations and market context
-     
+      
         **⚙️ Pro Tips:**
         - **For Scalping**: Use 0DTE mode with tight strike ranges
         - **For Swing Trading**: Use "This Week" with wider ranges
         - **For High Volume**: Increase minimum volume thresholds
         - **For Volatile Markets**: Increase profit targets and stop losses
-     
+      
         **🔧 Optimization:**
         - **Polygon API**: Get premium data with higher rate limits
         - **Conservative Refresh**: Use 120s+ intervals to avoid limits
         - **Focused Analysis**: Analyze one ticker at a time for best performance
         """)
+
 # Initialize session start time for performance tracking
 if 'session_start' not in st.session_state:
     st.session_state.session_start = time.time()
+
 # Enhanced auto-refresh logic with better rate limiting
 if st.session_state.get('auto_refresh_enabled', False) and ticker:
     current_time = time.time()
     elapsed = current_time - st.session_state.last_refresh
- 
+  
     # Enforce minimum refresh interval
     min_interval = max(st.session_state.refresh_interval, CONFIG['MIN_REFRESH_INTERVAL'])
- 
+  
     if elapsed > min_interval:
         st.session_state.last_refresh = current_time
         st.session_state.refresh_counter += 1
-     
+      
         # Clear only specific cache keys to avoid clearing user inputs
         st.cache_data.clear()
-     
+      
         # Show refresh notification
         st.success(f"🔄 Auto-refreshed at {datetime.datetime.now().strftime('%H:%M:%S')}")
         time.sleep(0.5) # Brief pause to show notification
         st.rerun()
+
 # Comment for production authentication
 # In production, use st.secrets for API keys or integrate with external auth service like OAuth
+
 # =============================
 # UNIT TESTS
 # =============================
@@ -3223,12 +3379,14 @@ class TestOptionsAnalyzer(unittest.TestCase):
         result = generate_enhanced_signal(option, 'call', stock_df, False)
         self.assertTrue(result['signal'])
         self.assertGreater(result['score'], 0.7)
-        self.assertEqual(len(result['explanations']), 10) # Updated number of conditions
+        self.assertEqual(len(result['explanations']), 10)  # Updated number of conditions
+
     def test_get_sentiment_score(self):
         # Test fallback
         sentiment = get_sentiment_score('AAPL')
         self.assertGreaterEqual(sentiment, -1.0)
         self.assertLessEqual(sentiment, 1.0)
+
     def test_calculate_dynamic_thresholds(self):
         stock_data = pd.Series({'ATR_pct': 0.03})
         option = {'expiry': datetime.date.today().strftime('%Y-%m-%d')}
@@ -3236,4 +3394,5 @@ class TestOptionsAnalyzer(unittest.TestCase):
         thresholds = calculate_dynamic_thresholds(stock_data, 'call', option, current_price)
         self.assertGreater(thresholds['delta_min'], 0.5)
         self.assertGreater(thresholds['gamma_min'], 0.05)
+
 # Run tests separately with: python -m unittest discover
