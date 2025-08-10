@@ -19,6 +19,8 @@ sectors = ['Tech', 'Tech', 'Tech', 'Finance', 'Finance', 'Finance', 'Energy', 'E
 data = []
 for stock in stocks:
     df = yf.download(stock, period="1y", progress=False)
+    if df.empty:
+        continue  # Skip if no data
     df['Return'] = df['Close'].pct_change()
     features = {
         'stock': stock,
@@ -30,6 +32,14 @@ for stock in stocks:
 
 df_features = pd.DataFrame(data)
 df_features['sector'] = sectors
+
+# Convert to numeric, handle NaN
+df_features['mean_return'] = pd.to_numeric(df_features['mean_return'], errors='coerce')
+df_features['std_return'] = pd.to_numeric(df_features['std_return'], errors='coerce')
+df_features['volume_mean'] = pd.to_numeric(df_features['volume_mean'], errors='coerce')
+
+# Drop rows with NaN
+df_features = df_features.dropna()
 
 # Train model
 X = df_features[['mean_return', 'std_return', 'volume_mean']]
@@ -63,6 +73,7 @@ if new_ticker:
         'volume_mean': new_df['Volume'].mean()
     }
     new_X = pd.DataFrame([new_features])
+    new_X = new_X.apply(pd.to_numeric, errors='coerce')
     pred_sector = clf.predict(new_X)[0]
     st.success(f"Predicted sector for {new_ticker}: {pred_sector}")
 
@@ -76,6 +87,11 @@ st.plotly_chart(fig)
 sector_volume = df_features.groupby('sector')['volume_mean'].mean()
 fig_vol = px.bar(sector_volume, x=sector_volume.index, y=sector_volume.values, title="Average Volume by Sector")
 st.plotly_chart(fig_vol)
+
+# Additional visualization: Sector Std Returns
+sector_std = df_features.groupby('sector')['std_return'].mean()
+fig_std = px.bar(sector_std, x=sector_std.index, y=sector_std.values, title="Average Std Returns by Sector")
+st.plotly_chart(fig_std)
 
 st.markdown("---")
 st.page_link("pages/2_Projects.py", label="← Back to Projects", icon="📚")
