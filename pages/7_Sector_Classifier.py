@@ -3,7 +3,10 @@ import yfinance as yf
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
+import plotly.express as px
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 st.title("Market Sector Classifier Demo")
 st.markdown("ML pipeline that processes historical price data from global markets, extracts technical indicators as features, trains Random Forest classifier for sector prediction, and provides visual analytics of sector rotation patterns.")
@@ -41,6 +44,14 @@ pred = clf.predict(X_test)
 acc = accuracy_score(y_test, pred)
 st.metric("Model Accuracy", f"{acc*100:.2f}%")
 
+# Confusion matrix
+cm = confusion_matrix(y_test, pred)
+fig_cm, ax = plt.subplots()
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+ax.set_xlabel('Predicted')
+ax.set_ylabel('Actual')
+st.pyplot(fig_cm)
+
 # Predict for a new stock
 new_ticker = st.text_input("Enter Stock to Predict Sector", "AMZN")
 if new_ticker:
@@ -60,6 +71,11 @@ st.subheader("Sector Rotation Analytics")
 sector_returns = df_features.groupby('sector')['mean_return'].mean()
 fig = px.bar(sector_returns, x=sector_returns.index, y=sector_returns.values, title="Average Returns by Sector")
 st.plotly_chart(fig)
+
+# Additional visualization: Sector Volume
+sector_volume = df_features.groupby('sector')['volume_mean'].mean()
+fig_vol = px.bar(sector_volume, x=sector_volume.index, y=sector_volume.values, title="Average Volume by Sector")
+st.plotly_chart(fig_vol)
 
 st.markdown("---")
 st.page_link("pages/2_Projects.py", label="← Back to Projects", icon="📚")
