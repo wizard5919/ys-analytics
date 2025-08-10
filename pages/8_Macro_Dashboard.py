@@ -66,14 +66,16 @@ if fred_key:
             region_df = pd.DataFrame({
                 'Date': [obs['date'] for obs in dat],
                 'Value': [float(obs['value']) if obs['value'] != '.' else np.nan for obs in dat],
-                'Region': ind
+                'Region': indicators.get(ind, ind)  # Use friendly name if available
             })
             region_data = pd.concat([region_data, region_df])
         
-        fig_compare = px.line(region_data, x='Date', y='Value', color='Region', title="Economic Performance Comparison")
+        fig_compare = px.line(region_data, x='Date', y='Value', color='Region', 
+                             title="Economic Performance Comparison")
         st.plotly_chart(fig_compare)
-    else:
-        st.warning("Please enter FRED API key.")
+        
+    except Exception as e:
+        st.error(f"Error fetching data: {str(e)}")
 else:
     st.warning("Enter FRED API key to fetch data.")
 
