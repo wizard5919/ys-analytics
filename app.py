@@ -11,7 +11,7 @@ st.set_page_config(
     }
 )
 
-# Add custom CSS styling
+# Add your custom CSS styling (same as your original)
 st.markdown("""
 <style>
 :root {
@@ -19,17 +19,14 @@ st.markdown("""
     --accent: #00C2FF;
     --light: #F5F9FC;
 }
-
 .stApp {
     background-color: white;
     background-image: radial-gradient(var(--light) 1px, transparent 1px);
     background-size: 20px 20px;
 }
-
 h1, h2, h3, h4 {
     color: var(--primary) !important;
 }
-
 .stButton button {
     background-color: var(--accent) !important;
     color: var(--primary) !important;
@@ -38,12 +35,10 @@ h1, h2, h3, h4 {
     font-weight: 600 !important;
     transition: all 0.3s ease !important;
 }
-
 .stButton button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 194, 255, 0.3);
 }
-
 .card {
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08);
@@ -51,7 +46,6 @@ h1, h2, h3, h4 {
     margin: 1rem 0;
     transition: all 0.3s ease;
 }
-
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(10, 31, 68, 0.15) !important;
@@ -59,5 +53,10 @@ h1, h2, h3, h4 {
 </style>
 """, unsafe_allow_html=True)
 
-# Route to home page
-st.switch_page("pages/1_Home.py")
+# Main landing page content
+st.title("Welcome to YS Analytics")
+st.write("""
+This is the main landing page.
+
+Use the sidebar on the left to navigate to different pages such as Home, Projects, Dashboard, and more.
+""")
