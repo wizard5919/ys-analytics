@@ -3,15 +3,7 @@ import streamlit as st
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Set page config
-st.set_page_config(
-    page_title="YS Analytics | Data-Driven Market Intelligence",
-    page_icon=LOGO_URL,
-    layout="centered",
-    initial_sidebar_state="auto",
-)
-
-# Enhanced CSS with better spacing and visual hierarchy
+# Minimal CSS for home page only
 st.markdown(f"""
 <style>
 :root {{
@@ -39,78 +31,18 @@ h1, h2, h3, h4 {{
     color: var(--primary) !important;
 }}
 
-h2 {{
-    border-left: 4px solid var(--accent);
-    padding-left: 0.75rem;
-    margin-top: 1.5rem !important;
-}}
-
 .card {{
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08);
     padding: 1.5rem;
     margin: 1.5rem 0;
-    transition: all 0.3s ease;
     background-color: white;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     border-top: 3px solid var(--accent);
-}}
-
-.card:hover {{
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 194, 255, 0.15) !important;
-}}
-
-.tech-tag {{
-    display: inline-block;
-    background-color: var(--dark);
-    color: var(--accent);
-    border-radius: 12px;
-    padding: 2px 10px;
-    margin: 2px 4px 2px 0;
-    font-size: 0.8em;
-    font-weight: 500;
-}}
-
-.project-card h3 {{
-    margin-top: 0 !important;
-    color: var(--primary) !important;
-}}
-
-.cta-button {{
-    margin-top: 1rem !important;
-}}
-
-.footer {{
-    font-size: 0.85rem;
-    color: var(--gray);
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(10, 31, 68, 0.1);
-    margin-top: 2rem;
-}}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {{
-    .column-card {{
-        margin-bottom: 1.5rem;
-    }}
-    
-    .header-container {{
-        flex-direction: column;
-        text-align: center;
-    }}
-    
-    .header-container img {{
-        margin: 0 auto 1rem;
-    }}
 }}
 </style>
 """, unsafe_allow_html=True)
 
-# Page header with improved spacing
+# Page header
 header_container = st.container()
 with header_container:
     col1, col2 = st.columns([1, 3])
@@ -121,7 +53,7 @@ with header_container:
         st.markdown("**Data-Driven Market Intelligence**")
     st.divider()
 
-# Mission statement with enhanced typography
+# Mission statement
 with st.container():
     st.markdown("""
     <div class="card">
@@ -136,90 +68,72 @@ with st.container():
     </div>
     """, unsafe_allow_html=True)
 
-# Featured projects section with improved layout
+# Featured projects section
 st.header("Featured Analytics Projects")
 st.caption("Select case studies demonstrating our financial analytics capabilities")
 
-# Responsive columns for projects
-col1, col2, col3 = st.columns(3, gap="medium")
+# Project 1 - Options Analytics Suite
+with st.container():
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Options Analytics Suite")
+    st.markdown("Real-time Greeks calculation and volatility surface visualization")
+    st.markdown("""
+    <div style="margin: 10px 0;">
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Python</span>
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Streamlit</span>
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">QuantLib</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Navigation button
+    if st.button("View Project", key="p1", use_container_width=True):
+        st.switch_page("pages/6_Options_Analyzer.py")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-projects = [
-    {
-        "title": "Options Analytics Suite",
-        "desc": "Real-time Greeks calculation and volatility surface visualization",
-        "tags": ["Python", "Streamlit", "QuantLib"],
-        "page": "Options_Analyzer"
-    },
-    {
-        "title": "Market Sector Classifier",
-        "desc": "ML-driven sector analysis using price movement patterns",
-        "tags": ["Scikit-learn", "TA-Lib", "Plotly"],
-        "page": "Sector_Classifier"
-    },
-    {
-        "title": "Macroeconomic Dashboard",
-        "desc": "Global economic indicators with forecasting capabilities",
-        "tags": ["FRED API", "Prophet", "Altair"],
-        "page": "Macro_Dashboard"
-    }
-]
+# Project 2 - Market Sector Classifier
+with st.container():
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Market Sector Classifier")
+    st.markdown("ML-driven sector analysis using price movement patterns")
+    st.markdown("""
+    <div style="margin: 10px 0;">
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Scikit-learn</span>
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">TA-Lib</span>
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Plotly</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("View Project", key="p2", use_container_width=True):
+        st.switch_page("pages/7_Sector_Classifier.py")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-for i, col in enumerate([col1, col2, col3]):
-    with col:
-        project = projects[i]
-        with st.container():
-            st.markdown(f'<div class="card project-card">', unsafe_allow_html=True)
-            st.subheader(project["title"])
-            st.markdown(f'<p style="color: var(--gray);">{project["desc"]}</p>', unsafe_allow_html=True)
-            
-            # Tech tags
-            tags_html = "".join(
-                f'<span class="tech-tag">{tag}</span>' 
-                for tag in project["tags"]
-            )
-            st.markdown(f'<div style="margin: 10px 0;">{tags_html}</div>', unsafe_allow_html=True)
-            
-            # Navigation button
-            if st.button("View Project", key=f"p{i+1}", use_container_width=True, 
-                         help=f"Explore the {project['title']}"):
-                st.switch_page(f"pages/6_{project['page']}.py")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
+# Project 3 - Macroeconomic Dashboard
+with st.container():
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Macroeconomic Dashboard")
+    st.markdown("Global economic indicators with forecasting capabilities")
+    st.markdown("""
+    <div style="margin: 10px 0;">
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">FRED API</span>
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Prophet</span>
+        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Altair</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("View Project", key="p3", use_container_width=True):
+        st.switch_page("pages/8_Macro_Dashboard.py")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# Call to action section with improved buttons
+# Call to action section
 st.divider()
-cta_cols = st.columns(3)
-with cta_cols[0]:
-    st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", 
-                icon="📚", use_container_width=True, 
-                help="View all our analytics projects")
-with cta_cols[1]:
-    st.page_link("pages/3_Dashboard.py", label="Live Market Dashboard", 
-                icon="📈", use_container_width=True,
-                help="Access real-time market data")
-with cta_cols[2]:
-    st.page_link("pages/5_Contact.py", label="Schedule Consultation", 
-                icon="✉️", use_container_width=True,
-                help="Get in touch with our team")
+st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+st.page_link("pages/3_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
+st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
-# Enhanced footer with social links
+# Footer section
 st.divider()
-footer = st.container()
-with footer:
-    col1, col2, col3 = st.columns([2, 3, 2])
-    with col1:
-        st.markdown("**© 2024 YS Analytics**", help="Financial Analytics Platform")
-    with col2:
-        st.markdown("""
-        <div style="text-align: center;">
-            <a href="https://github.com/wizard5919" target="_blank" style="margin: 0 10px; text-decoration: none; color: var(--primary);">
-                <span>GitHub</span>
-            </a>
-            <span>•</span>
-            <a href="https://linkedin.com" target="_blank" style="margin: 0 10px; text-decoration: none; color: var(--primary);">
-                <span>LinkedIn</span>
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-    with col3:
-        st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+st.markdown("**© 2024 YS Analytics** • [GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
+st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
