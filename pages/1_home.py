@@ -1,6 +1,4 @@
 import streamlit as st
-from pathlib import Path
-import importlib.util
 
 # Page configuration
 st.set_page_config(
@@ -8,13 +6,6 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
-
-# Dynamically import 1_Home.py (optional, can remove if homepage code is here)
-home_path = Path("pages/1_Home.py")
-if home_path.exists():
-    spec = importlib.util.spec_from_file_location("home", home_path)
-    home = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(home)
 
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
@@ -73,7 +64,7 @@ projects = [
         "title": "Options Analytics Suite",
         "description": "Real-time Greeks calculation and volatility surface visualization",
         "tech": ["Python", "Streamlit", "QuantLib"],
-        "page": "2_Projects"
+        "page": "2_Projects"  # Correct Streamlit page name
     },
     {
         "title": "Market Sector Classifier",
@@ -97,7 +88,7 @@ for col, project in zip(cols, projects):
             st.write(project["description"])
             tech_tags = " ".join([f"<span class='tech-tag'>{t}</span>" for t in project["tech"]])
             st.markdown(tech_tags, unsafe_allow_html=True)
-            # Correct usage of st.page_link
+            # Correct page link
             st.page_link(project["page"], label="View Project", icon="📂", use_container_width=True)
             st.markdown("---")
 
