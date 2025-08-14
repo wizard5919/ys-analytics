@@ -18,5 +18,6 @@ nest_asyncio
 streamlit-authenticator
 playwright
 seaborn
+quantlib
 
 
