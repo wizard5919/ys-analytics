@@ -1,6 +1,7 @@
 import streamlit as st
 from pathlib import Path
-from pages import _1_Home
+from pages import home, projects, dashboard, insights, contact, options_analyzer, sector_classifier, macro_dashboard
+
 
 
 # Optional: set page config globally
