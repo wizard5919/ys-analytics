@@ -6,6 +6,7 @@ yfinance
 matplotlib
 scikit-learn
 prophet
+pystan
 python-dotenv
 pillow
 requests
@@ -19,5 +20,3 @@ streamlit-authenticator
 playwright
 seaborn
 quantlib
-
-
