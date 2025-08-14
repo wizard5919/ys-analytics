@@ -1,9 +1,18 @@
 import streamlit as st
+import pandas as pd
+import numpy as np
 
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Page header
+# Page configuration
+st.set_page_config(
+    page_title="YS Analytics | Data-Driven Market Intelligence",
+    page_icon="📊",
+    layout="wide"
+)
+
+# Page header with logo and title
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image(LOGO_URL, width=150)
@@ -25,7 +34,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Featured projects
+# Featured projects section
 st.header("Featured Analytics Projects")
 st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
 
@@ -43,12 +52,7 @@ with col1:
         <span class="tech-tag">QuantLib</span>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Create link to project section
-    if st.button("View Project", key="p1", use_container_width=True):
-        st.session_state.navigate_to = "options"
-        st.switch_page("pages/2_Projects.py")
-    
+    st.page_link("pages/2_Projects.py", label="View Project", icon="📂", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Project 2 - Market Sector Classifier
@@ -63,11 +67,7 @@ with col2:
         <span class="tech-tag">Plotly</span>
     </div>
     """, unsafe_allow_html=True)
-    
-    if st.button("View Project", key="p2", use_container_width=True):
-        st.session_state.navigate_to = "sector"
-        st.switch_page("pages/2_Projects.py")
-    
+    st.page_link("pages/2_Projects.py", label="View Project", icon="📂", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Project 3 - Macroeconomic Dashboard
@@ -82,11 +82,7 @@ with col3:
         <span class="tech-tag">Altair</span>
     </div>
     """, unsafe_allow_html=True)
-    
-    if st.button("View Project", key="p3", use_container_width=True):
-        st.session_state.navigate_to = "macro"
-        st.switch_page("pages/2_Projects.py")
-    
+    st.page_link("pages/2_Projects.py", label="View Project", icon="📂", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Call to action
