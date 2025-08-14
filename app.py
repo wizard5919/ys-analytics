@@ -1,5 +1,7 @@
 import streamlit as st
 from pathlib import Path
+from pages import _1_Home
+
 
 # Optional: set page config globally
 st.set_page_config(
