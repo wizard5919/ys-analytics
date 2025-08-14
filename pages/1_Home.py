@@ -15,7 +15,7 @@ st.markdown(f"""
 }}
 
 .stApp {{
-    background-color: white;
+    background-color: black;
     background-image: radial-gradient(var(--light) 1px, transparent 1px);
     background-size: 20px 20px;
     padding-top: 1rem;
@@ -36,7 +36,7 @@ h1, h2, h3, h4 {{
     box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08);
     padding: 1.5rem;
     margin: 1.5rem 0;
-    background-color: white;
+    background-color: black;
     border-top: 3px solid var(--accent);
 }}
 </style>
@@ -137,3 +137,4 @@ st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️",
 st.divider()
 st.markdown("**© 2024 YS Analytics** • [GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
