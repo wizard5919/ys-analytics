@@ -2,12 +2,9 @@ from streamlit.web import bootstrap
 import os
 
 def main():
-    # Get port from Vercel environment variable
     port = int(os.environ.get("PORT", 8501))
-    
-    # Configure Streamlit
     bootstrap.run(
-        "app.py",  # Changed to app.py
+        "Home.py",  # Changed to Home.py
         command_line=None,
         args=[
             "--server.port", str(port),
