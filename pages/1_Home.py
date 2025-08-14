@@ -3,7 +3,7 @@ import streamlit as st
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Minimal CSS for home page only
+# Fixed CSS with proper contrast
 st.markdown(f"""
 <style>
 :root {{
@@ -12,32 +12,44 @@ st.markdown(f"""
     --light: #F5F9FC;
     --dark: #0A1F44;
     --gray: #6c757d;
+    --text-light: #FFFFFF;  /* Added light text color */
+    --text-dark: #0A1F44;   /* Dark text color */
 }}
 
 .stApp {{
-    background-color: black;
-    background-image: radial-gradient(var(--light) 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-color: #0A1F44;  /* Dark blue background */
+    color: var(--text-light) !important;  /* Light text color */
     padding-top: 1rem;
 }}
 
 .header-container {{
-    border-bottom: 1px solid rgba(10, 31, 68, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 1.5rem;
     margin-bottom: 2rem;
 }}
 
 h1, h2, h3, h4 {{
-    color: var(--primary) !important;
+    color: var(--text-light) !important;  /* Light text for headings */
 }}
 
 .card {{
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     padding: 1.5rem;
     margin: 1.5rem 0;
-    background-color: black;
+    background-color: rgba(255, 255, 255, 0.1);  /* Semi-transparent white */
     border-top: 3px solid var(--accent);
+    color: var(--text-light) !important;  /* Light text in cards */
+}}
+
+/* Make all text light */
+p, li, div {{
+    color: var(--text-light) !important;
+}}
+
+/* Style links to be visible */
+a {{
+    color: var(--accent) !important;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -79,9 +91,9 @@ with st.container():
     st.markdown("Real-time Greeks calculation and volatility surface visualization")
     st.markdown("""
     <div style="margin: 10px 0;">
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Python</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Streamlit</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">QuantLib</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Python</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Streamlit</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">QuantLib</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -98,9 +110,9 @@ with st.container():
     st.markdown("ML-driven sector analysis using price movement patterns")
     st.markdown("""
     <div style="margin: 10px 0;">
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Scikit-learn</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">TA-Lib</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Plotly</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Scikit-learn</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">TA-Lib</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Plotly</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -116,9 +128,9 @@ with st.container():
     st.markdown("Global economic indicators with forecasting capabilities")
     st.markdown("""
     <div style="margin: 10px 0;">
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">FRED API</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Prophet</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Altair</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">FRED API</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Prophet</span>
+        <span style="display: inline-block; background-color: #00C2FF; color: #0A1F44; border-radius: 12px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 0.8em; font-weight: 500;">Altair</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -137,4 +149,3 @@ st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️",
 st.divider()
 st.markdown("**© 2024 YS Analytics** • [GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
-
