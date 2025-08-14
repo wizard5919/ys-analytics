@@ -1,4 +1,15 @@
+
 import streamlit as st
+import importlib.util
+from pathlib import Path
+
+st.set_page_config(page_title="YS Analytics", layout="wide")
+
+# Dynamically import 1_Home.py
+home_path = Path("pages/1_Home.py")
+spec = importlib.util.spec_from_file_location("home", home_path)
+home = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(home)
 
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
@@ -110,3 +121,4 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
