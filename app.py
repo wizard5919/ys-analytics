@@ -7,6 +7,12 @@ if page == "Home":
     st.switch_page("pages/1_Home.py")
 elif page == "Options Analyzer":
     st.switch_page("pages/6_Options_Analyzer.py")
+from streamlit.runtime.scriptrunner import RerunData, RerunException
+from streamlit.source_util import get_pages
+
+# Redirect root to home
+if st.experimental_get_query_params().get("page") in [None, "Home"]:
+    st.switch_page("pages/1_Home.py")
 
 # Global page configuration
 st.set_page_config(
@@ -69,5 +75,6 @@ h1, h2, h3, h4 {
 
 # Route to home page
 st.switch_page("pages/1_Home.py")
+
 
 
