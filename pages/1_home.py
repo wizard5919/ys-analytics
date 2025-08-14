@@ -1,5 +1,6 @@
 import streamlit as st
 from pathlib import Path
+import importlib.util
 
 # Page configuration
 st.set_page_config(
@@ -7,6 +8,11 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+
+# Define correct page paths
+PROJECTS_PAGE = "pages/2_Projects.py"
+DASHBOARD_PAGE = "pages/3_Dashboard.py"
+CONTACT_PAGE = "pages/4_Contact.py"
 
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
@@ -65,19 +71,19 @@ projects = [
         "title": "Options Analytics Suite",
         "description": "Real-time Greeks calculation and volatility surface visualization",
         "tech": ["Python", "Streamlit", "QuantLib"],
-        "page_name": "Options Analyzer"
+        "page": PROJECTS_PAGE
     },
     {
         "title": "Market Sector Classifier",
         "description": "ML-driven sector analysis using price movement patterns",
         "tech": ["Scikit-learn", "TA-Lib", "Plotly"],
-        "page_name": "Sector Classifier"
+        "page": PROJECTS_PAGE
     },
     {
         "title": "Macroeconomic Dashboard",
         "description": "Global economic indicators with forecasting capabilities",
         "tech": ["FRED API", "Prophet", "Altair"],
-        "page_name": "Macro Dashboard"
+        "page": DASHBOARD_PAGE
     }
 ]
 
@@ -89,19 +95,18 @@ for col, project in zip(cols, projects):
             st.write(project["description"])
             tech_tags = " ".join([f"<span class='tech-tag'>{t}</span>" for t in project["tech"]])
             st.markdown(tech_tags, unsafe_allow_html=True)
-            # Correct page link
-            st.page_link(project["page_name"], label="View Project", icon="📂", use_container_width=True)
+            st.page_link(project["page"], label="View Project", icon="📂", use_container_width=True)
             st.markdown("---")
 
 # Call to action
 st.header("Get Started")
 cta_cols = st.columns(3)
 with cta_cols[0]:
-    st.page_link("Options Analyzer", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+    st.page_link(PROJECTS_PAGE, label="Explore Full Portfolio", icon="📚", use_container_width=True)
 with cta_cols[1]:
-    st.page_link("Macro Dashboard", label="Live Market Dashboard", icon="📈", use_container_width=True)
+    st.page_link(DASHBOARD_PAGE, label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
-    st.page_link("Contact", label="Schedule Consultation", icon="✉️", use_container_width=True)
+    st.page_link(CONTACT_PAGE, label="Schedule Consultation", icon="✉️", use_container_width=True)
 
 # Footer
 st.markdown("---")
