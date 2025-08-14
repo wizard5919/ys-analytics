@@ -1,22 +1,40 @@
+# Core
 streamlit
+streamlit-autorefresh
+streamlit-authenticator
+
+# Data manipulation & analysis
 pandas
 numpy
-plotly
+scipy
+ta
 yfinance
+requests
+aiohttp
+nest_asyncio
+
+# Visualization
+plotly
 matplotlib
+seaborn
+
+# Machine learning & stats
 scikit-learn
 prophet
 pystan
-python-dotenv
-pillow
-requests
-ta
-polygon-api-client
-streamlit-autorefresh
-scipy
-aiohttp
-nest_asyncio
-streamlit-authenticator
-playwright
-seaborn
+statsmodels
+
+# Financial & quantitative libraries
 quantlib
+polygon-api-client
+
+# Images & assets
+pillow
+python-dotenv
+
+# Browser automation / testing
+playwright
+
+# Excel support
+openpyxl
+xlsxwriter
