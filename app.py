@@ -5,44 +5,56 @@ LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/asset
 
 # MUST be the first command
 st.set_page_config(
-    page_title="YS Analytics",
+    page_title="YS Analytics | Financial Intelligence",
     page_icon=LOGO_URL,
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="auto"
 )
 
-# Navigation sidebar
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Projects", "Dashboard", "Contact"])
+# Add minimal CSS
+st.markdown("""
+<style>
+:root {
+    --primary: #0A1F44;
+    --accent: #00C2FF;
+}
 
-if page == "Home":
-    # Home page content will be shown in main area
-    pass
-elif page == "Projects":
-    st.switch_page("pages/2_Projects.py")
-elif page == "Dashboard":
-    st.switch_page("pages/3_Dashboard.py")
-elif page == "Contact":
-    st.switch_page("pages/5_Contact.py")
+h1, h2, h3, h4 {
+    color: var(--primary) !important;
+}
 
-# Home Page Content
+.tech-tag {
+    display: inline-block;
+    background-color: #0A1F44;
+    color: #00C2FF;
+    border-radius: 12px;
+    padding: 2px 10px;
+    margin: 2px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(10, 31, 68, 0.1);
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border-top: 3px solid var(--accent);
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Page header
 col1, col2 = st.columns([1, 3])
 with col1:
-    st.image(LOGO_URL, width=150)
+    st.image(LOGO_URL, width=120)
 with col2:
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
 
 # Mission statement
 st.markdown("""
-<div style='
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08);
-    padding: 1.5rem;
-    margin: 1.5rem 0;
-    background-color: white;
-    border-top: 3px solid #00C2FF;
-'>
+<div class="card">
     <h2>Precision Analytics for Financial Markets</h2>
     <p>We transform complex market data into actionable intelligence through:</p>
     <ul>
@@ -56,20 +68,20 @@ st.markdown("""
 
 # Featured projects
 st.header("Featured Analytics Projects")
-st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
+st.caption("Select case studies demonstrating our financial analytics capabilities")
 
 col1, col2, col3 = st.columns(3)
 
 # Project 1 - Options Analytics Suite
 with col1:
-    st.markdown('<div style="border-radius: 12px; box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08); padding: 1.5rem; margin: 1.5rem 0; background-color: white; border-top: 3px solid #00C2FF;">', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Options Analytics Suite")
     st.markdown("Real-time Greeks calculation and volatility surface visualization")
     st.markdown("""
     <div style="margin: 10px 0;">
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">Python</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">Streamlit</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">QuantLib</span>
+        <span class="tech-tag">Python</span>
+        <span class="tech-tag">Streamlit</span>
+        <span class="tech-tag">QuantLib</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -80,14 +92,14 @@ with col1:
 
 # Project 2 - Market Sector Classifier
 with col2:
-    st.markdown('<div style="border-radius: 12px; box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08); padding: 1.5rem; margin: 1.5rem 0; background-color: white; border-top: 3px solid #00C2FF;">', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Market Sector Classifier")
     st.markdown("ML-driven sector analysis using price movement patterns")
     st.markdown("""
     <div style="margin: 10px 0;">
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">Scikit-learn</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">TA-Lib</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">Plotly</span>
+        <span class="tech-tag">Scikit-learn</span>
+        <span class="tech-tag">TA-Lib</span>
+        <span class="tech-tag">Plotly</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -98,14 +110,14 @@ with col2:
 
 # Project 3 - Macroeconomic Dashboard
 with col3:
-    st.markdown('<div style="border-radius: 12px; box-shadow: 0 4px 12px rgba(10, 31, 68, 0.08); padding: 1.5rem; margin: 1.5rem 0; background-color: white; border-top: 3px solid #00C2FF;">', unsafe_allow_html=True)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("Macroeconomic Dashboard")
     st.markdown("Global economic indicators with forecasting capabilities")
     st.markdown("""
     <div style="margin: 10px 0;">
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">FRED API</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">Prophet</span>
-        <span style="display: inline-block; background-color: #0A1F44; color: #00C2FF; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 0.8em; font-weight: 500;">Altair</span>
+        <span class="tech-tag">FRED API</span>
+        <span class="tech-tag">Prophet</span>
+        <span class="tech-tag">Altair</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -115,7 +127,7 @@ with col3:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Call to action
-st.markdown("---")
+st.divider()
 cta_cols = st.columns(3)
 with cta_cols[0]:
     st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
@@ -125,7 +137,7 @@ with cta_cols[2]:
     st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
 # Footer
-st.markdown("---")
+st.divider()
 footer_cols = st.columns(3)
 with footer_cols[0]:
     st.markdown("**© 2024 YS Analytics**")
