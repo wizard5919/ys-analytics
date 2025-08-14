@@ -1,31 +1,17 @@
 import streamlit as st
 
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Options Analyzer"])
-
-if page == "Home":
-    st.switch_page("pages/1_Home.py")
-elif page == "Options Analyzer":
-    st.switch_page("pages/6_Options_Analyzer.py")
-from streamlit.runtime.scriptrunner import RerunData, RerunException
-from streamlit.source_util import get_pages
-
-# Redirect root to home
-if st.experimental_get_query_params().get("page") in [None, "Home"]:
-    st.switch_page("pages/1_Home.py")
-
-# Global page configuration
+# FIRST: Set page config - must be first Streamlit command
 st.set_page_config(
     page_title="YS Analytics | Data-Driven Market Intelligence",
     page_icon="assets/logo.png",
     layout="centered",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="auto",  # Changed to 'auto' for better UX
     menu_items={
         'About': "### YS Analytics\nFinancial Analytics Platform\n"
     }
 )
 
-# Add custom CSS styling
+# SECOND: Add global CSS - applies to all pages
 st.markdown("""
 <style>
 :root {
@@ -73,8 +59,12 @@ h1, h2, h3, h4 {
 </style>
 """, unsafe_allow_html=True)
 
-# Route to home page
-st.switch_page("pages/1_Home.py")
+# THIRD: Navigation logic
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Home", "Options Analyzer"])
 
-
-
+# Handle page routing
+if page == "Home":
+    st.switch_page("pages/1_Home.py")
+elif page == "Options Analyzer":
+    st.switch_page("pages/6_Options_Analyzer.py")
