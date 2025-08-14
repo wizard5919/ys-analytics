@@ -6,7 +6,7 @@ Explore our financial analytics projects demonstrating expertise in market analy
 predictive modeling, and data visualization.
 """)
 
-# Project 1
+# ---------------- Project 1 ----------------
 with st.expander("Options Analytics Suite", expanded=True):
     st.markdown("""
     <div class="card">
@@ -20,14 +20,15 @@ with st.expander("Options Analytics Suite", expanded=True):
             <li>Strategy backtesting capabilities</li>
         </ul>
         <p><strong>Technologies:</strong> Python, QuantLib, Streamlit, Plotly</p>
-        <div style="display: flex; gap: 10px;">
-            <a href="pages/6_Options_Analyzer.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Live Demo</a>
-            <a href="https://github.com/wizard5919/options_analyzerPublic" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">GitHub Repository</a>
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
-# Project 2
+    # Internal page link
+    st.page_link("Options Analyzer", label="View Live Demo", icon="📂", use_container_width=True)
+    # External GitHub link
+    st.markdown("[GitHub Repository](https://github.com/wizard5919/options_analyzerPublic)")
+
+# ---------------- Project 2 ----------------
 with st.expander("Market Sector Classifier"):
     st.markdown("""
     <div class="card">
@@ -41,14 +42,15 @@ with st.expander("Market Sector Classifier"):
             <li>Provides visual analytics of sector rotation patterns</li>
         </ul>
         <p><strong>Technologies:</strong> Python, Scikit-learn, TA-Lib, Plotly</p>
-        <div style="display: flex; gap: 10px;">
-            <a href="pages/7_Sector_Classifier.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Case Study</a>
-            <a href="https://example.com/research-paper.pdf" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Research Paper</a>
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
-# Project 3
+    # Internal page link
+    st.page_link("Sector Classifier", label="View Case Study", icon="📂", use_container_width=True)
+    # External research paper
+    st.markdown("[Research Paper](https://example.com/research-paper.pdf)")
+
+# ---------------- Project 3 ----------------
 with st.expander("Macroeconomic Dashboard"):
     st.markdown("""
     <div class="card">
@@ -62,12 +64,13 @@ with st.expander("Macroeconomic Dashboard"):
             <li>Compares economic performance across regions</li>
         </ul>
         <p><strong>Technologies:</strong> Python, FRED API, Prophet, Altair</p>
-        <div style="display: flex; gap: 10px;">
-            <a href="pages/8_Macro_Dashboard.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Explore Dashboard</a>
-            <a href="pages/9_Methodology.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Methodology</a>
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Internal page links
+    st.page_link("Macro Dashboard", label="Explore Dashboard", icon="📂", use_container_width=True)
+    st.page_link("Methodology", label="Methodology", icon="📄", use_container_width=True)
+
+# Back to Home
 st.markdown("---")
-st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+st.page_link("Home", label="← Back to Home", icon="🏠")
