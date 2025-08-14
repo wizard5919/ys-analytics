@@ -2,24 +2,24 @@ import streamlit as st
 from pathlib import Path
 import importlib.util
 
-# Set page config
+# Page configuration
 st.set_page_config(
     page_title="YS Analytics | Data-Driven Market Intelligence",
     page_icon="📊",
     layout="wide"
 )
 
-# Dynamically import 1_Home.py (optional, you can remove if not needed)
+# Dynamically import 1_Home.py (optional if you have logic there)
 home_path = Path("pages/1_Home.py")
 if home_path.exists():
     spec = importlib.util.spec_from_file_location("home", home_path)
     home = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(home)
 
-# GitHub raw URL for logo
+# GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Custom CSS
+# Custom CSS for tech tags and cards
 st.markdown("""
 <style>
 .tech-tag {
@@ -46,7 +46,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header
+# Header with logo and title
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image(LOGO_URL, width=150)
