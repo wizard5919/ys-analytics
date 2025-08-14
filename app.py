@@ -1,4 +1,5 @@
 import streamlit as st
+import Home  # or from Home import main
 
 # Global page configuration
 st.set_page_config(
@@ -61,3 +62,4 @@ h1, h2, h3, h4 {
 
 # Route to home page
 st.switch_page("pages/1_Home.py")
+
