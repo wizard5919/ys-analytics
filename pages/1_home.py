@@ -1,16 +1,25 @@
 import streamlit as st
+from pathlib import Path
+import importlib.util
 
-# Page configuration
+# Set page config
 st.set_page_config(
     page_title="YS Analytics | Data-Driven Market Intelligence",
     page_icon="📊",
     layout="wide"
 )
 
-# GitHub raw URL for your logo
+# Dynamically import 1_Home.py (optional, you can remove if not needed)
+home_path = Path("pages/1_Home.py")
+if home_path.exists():
+    spec = importlib.util.spec_from_file_location("home", home_path)
+    home = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(home)
+
+# GitHub raw URL for logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Custom CSS for tech tags and cards
+# Custom CSS
 st.markdown("""
 <style>
 .tech-tag {
@@ -37,7 +46,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header with logo and title
+# Header
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image(LOGO_URL, width=150)
@@ -64,19 +73,19 @@ projects = [
         "title": "Options Analytics Suite",
         "description": "Real-time Greeks calculation and volatility surface visualization",
         "tech": ["Python", "Streamlit", "QuantLib"],
-        "page": "2_Projects"  # Correct Streamlit page name
+        "page": "Projects"
     },
     {
         "title": "Market Sector Classifier",
         "description": "ML-driven sector analysis using price movement patterns",
         "tech": ["Scikit-learn", "TA-Lib", "Plotly"],
-        "page": "2_Projects"
+        "page": "Projects"
     },
     {
         "title": "Macroeconomic Dashboard",
         "description": "Global economic indicators with forecasting capabilities",
         "tech": ["FRED API", "Prophet", "Altair"],
-        "page": "3_Dashboard"
+        "page": "Dashboard"
     }
 ]
 
@@ -88,7 +97,6 @@ for col, project in zip(cols, projects):
             st.write(project["description"])
             tech_tags = " ".join([f"<span class='tech-tag'>{t}</span>" for t in project["tech"]])
             st.markdown(tech_tags, unsafe_allow_html=True)
-            # Correct page link
             st.page_link(project["page"], label="View Project", icon="📂", use_container_width=True)
             st.markdown("---")
 
@@ -96,11 +104,11 @@ for col, project in zip(cols, projects):
 st.header("Get Started")
 cta_cols = st.columns(3)
 with cta_cols[0]:
-    st.page_link("2_Projects", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+    st.page_link("Projects", label="Explore Full Portfolio", icon="📚", use_container_width=True)
 with cta_cols[1]:
-    st.page_link("3_Dashboard", label="Live Market Dashboard", icon="📈", use_container_width=True)
+    st.page_link("Dashboard", label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
-    st.page_link("5_Contact", label="Schedule Consultation", icon="✉️", use_container_width=True)
+    st.page_link("Contact", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
 # Footer
 st.markdown("---")
