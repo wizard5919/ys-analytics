@@ -3,51 +3,10 @@ import streamlit as st
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# MUST be the first command
-st.set_page_config(
-    page_title="YS Analytics | Financial Intelligence",
-    page_icon=LOGO_URL,
-    layout="centered",
-    initial_sidebar_state="auto"
-)
-
-# Add minimal CSS
-st.markdown("""
-<style>
-:root {
-    --primary: #0A1F44;
-    --accent: #00C2FF;
-}
-
-h1, h2, h3, h4 {
-    color: var(--primary) !important;
-}
-
-.tech-tag {
-    display: inline-block;
-    background-color: #0A1F44;
-    color: #00C2FF;
-    border-radius: 12px;
-    padding: 2px 10px;
-    margin: 2px;
-    font-size: 0.8em;
-    font-weight: 500;
-}
-
-.card {
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(10, 31, 68, 0.1);
-    padding: 1.5rem;
-    margin: 1rem 0;
-    border-top: 3px solid var(--accent);
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Page header
 col1, col2 = st.columns([1, 3])
 with col1:
-    st.image(LOGO_URL, width=120)
+    st.image(LOGO_URL, width=150)
 with col2:
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
@@ -68,7 +27,7 @@ st.markdown("""
 
 # Featured projects
 st.header("Featured Analytics Projects")
-st.caption("Select case studies demonstrating our financial analytics capabilities")
+st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
 
 col1, col2, col3 = st.columns(3)
 
@@ -85,8 +44,10 @@ with col1:
     </div>
     """, unsafe_allow_html=True)
     
+    # Create link to project section
     if st.button("View Project", key="p1", use_container_width=True):
-        st.switch_page("pages/6_Options_Analyzer.py")
+        st.session_state.navigate_to = "options"
+        st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -104,7 +65,8 @@ with col2:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p2", use_container_width=True):
-        st.switch_page("pages/7_Sector_Classifier.py")
+        st.session_state.navigate_to = "sector"
+        st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -122,12 +84,13 @@ with col3:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p3", use_container_width=True):
-        st.switch_page("pages/8_Macro_Dashboard.py")
+        st.session_state.navigate_to = "macro"
+        st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
 # Call to action
-st.divider()
+st.markdown("---")
 cta_cols = st.columns(3)
 with cta_cols[0]:
     st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
@@ -137,7 +100,7 @@ with cta_cols[2]:
     st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
 # Footer
-st.divider()
+st.markdown("---")
 footer_cols = st.columns(3)
 with footer_cols[0]:
     st.markdown("**© 2024 YS Analytics**")
@@ -145,3 +108,19 @@ with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
+# Custom CSS for tech tags
+st.markdown("""
+<style>
+.tech-tag {
+    display: inline-block;
+    background-color: #0A1F44;
+    color: #00C2FF;
+    border-radius: 12px;
+    padding: 2px 10px;
+    margin: 2px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+</style>
+""", unsafe_allow_html=True)
