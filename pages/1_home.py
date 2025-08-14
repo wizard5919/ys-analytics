@@ -65,19 +65,19 @@ projects = [
         "title": "Options Analytics Suite",
         "description": "Real-time Greeks calculation and volatility surface visualization",
         "tech": ["Python", "Streamlit", "QuantLib"],
-        "page_name": "Projects"
+        "page_name": "Options Analyzer"
     },
     {
         "title": "Market Sector Classifier",
         "description": "ML-driven sector analysis using price movement patterns",
         "tech": ["Scikit-learn", "TA-Lib", "Plotly"],
-        "page_name": "Projects"
+        "page_name": "Sector Classifier"
     },
     {
         "title": "Macroeconomic Dashboard",
         "description": "Global economic indicators with forecasting capabilities",
         "tech": ["FRED API", "Prophet", "Altair"],
-        "page_name": "Dashboard"
+        "page_name": "Macro Dashboard"
     }
 ]
 
@@ -89,6 +89,7 @@ for col, project in zip(cols, projects):
             st.write(project["description"])
             tech_tags = " ".join([f"<span class='tech-tag'>{t}</span>" for t in project["tech"]])
             st.markdown(tech_tags, unsafe_allow_html=True)
+            # Correct page link
             st.page_link(project["page_name"], label="View Project", icon="📂", use_container_width=True)
             st.markdown("---")
 
@@ -96,9 +97,9 @@ for col, project in zip(cols, projects):
 st.header("Get Started")
 cta_cols = st.columns(3)
 with cta_cols[0]:
-    st.page_link("Projects", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+    st.page_link("Options Analyzer", label="Explore Full Portfolio", icon="📚", use_container_width=True)
 with cta_cols[1]:
-    st.page_link("Dashboard", label="Live Market Dashboard", icon="📈", use_container_width=True)
+    st.page_link("Macro Dashboard", label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
     st.page_link("Contact", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
