@@ -1,5 +1,5 @@
 import streamlit as st
-
+st.set_page_config(page_title="Home")  # This makes "Home" the official nav name
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
@@ -124,3 +124,4 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
