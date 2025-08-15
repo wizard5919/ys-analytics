@@ -70,4 +70,5 @@ with st.expander("Macroeconomic Dashboard"):
     """, unsafe_allow_html=True)
 
 st.markdown("---")
-st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+st.page_link("Home.py", label="← Back to Home", icon="🏠")
+
