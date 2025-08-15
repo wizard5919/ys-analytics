@@ -1,8 +1,5 @@
 import streamlit as st
 
-# This ensures "Home" is the official page name used for navigation
-st.set_page_config(page_title="Home")
-
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
@@ -47,7 +44,9 @@ with col1:
     </div>
     """, unsafe_allow_html=True)
     
+    # Create link to project section
     if st.button("View Project", key="p1", use_container_width=True):
+        st.session_state.navigate_to = "options"
         st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
@@ -66,6 +65,7 @@ with col2:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p2", use_container_width=True):
+        st.session_state.navigate_to = "sector"
         st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
@@ -84,19 +84,20 @@ with col3:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p3", use_container_width=True):
+        st.session_state.navigate_to = "macro"
         st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Call to action (now using page titles instead of file paths)
+# Call to action
 st.markdown("---")
 cta_cols = st.columns(3)
 with cta_cols[0]:
-    st.page_link("Projects", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+    st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
 with cta_cols[1]:
-    st.page_link("Dashboard", label="Live Market Dashboard", icon="📈", use_container_width=True)
+    st.page_link("pages/3_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
-    st.page_link("Contact", label="Schedule Consultation", icon="✉️", use_container_width=True)
+    st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
 # Footer
 st.markdown("---")
