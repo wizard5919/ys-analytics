@@ -164,4 +164,4 @@ with tabs[3]:
             st.error(f"Error fetching FRED data: {str(e)}. Please check API key.")
 
 st.markdown("---")
-st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+st.page_link("Home.py", label="← Back to Home", icon="🏠")
