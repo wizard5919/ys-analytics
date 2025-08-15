@@ -1,5 +1,8 @@
 import streamlit as st
 
+# Set page title for multi-page navigation
+st.set_page_config(page_title="Insights")
+
 st.title("Market Insights & Research")
 st.markdown("""
 ## Coming Soon: YS Analytics Insights Hub
@@ -12,15 +15,17 @@ We're developing a comprehensive resource for financial market analysis, includi
 - **Quantitative Research**: Algorithmic trading insights
 
 Sign up to be notified when we launch:
-
 """)
 
+# Email input
 email = st.text_input("Your Email Address")
 if st.button("Notify Me"):
-    if "@" in email:
+    if "@" in email and "." in email:
         st.success("You'll be notified when we launch our insights hub!")
     else:
         st.warning("Please enter a valid email address")
 
 st.markdown("---")
-st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+
+# ✅ Correct navigation back to Home page
+st.page_link("Home", label="← Back to Home", icon="🏠")
