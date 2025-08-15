@@ -49,4 +49,5 @@ st.subheader("Our Location")
 st.map(pd.DataFrame({'lat': [33.7537], 'lon': [-84.3863]}), zoom=12)
 
 st.markdown("---")
-st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+st.page_link("Home.py", label="← Back to Home", icon="🏠")
+
