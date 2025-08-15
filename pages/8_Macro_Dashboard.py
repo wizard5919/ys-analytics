@@ -81,3 +81,4 @@ else:
 
 st.markdown("---")
 st.page_link("pages/2_Projects.py", label="← Back to Projects", icon="📚")
+
