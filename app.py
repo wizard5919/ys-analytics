@@ -1,9 +1,95 @@
 import streamlit as st
 
+# ==============================
+# SEO & VERIFICATION IMPROVEMENTS
+# ==============================
+st.set_page_config(
+    page_title="YS Analytics - Financial Market Intelligence",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Add SEO meta tags and verification
+st.markdown(f"""
+<head>
+    <meta name="google-site-verification" content="f58608a8571b51fd" />
+    <meta name="description" content="Quantitative research, predictive modeling, and interactive dashboards for financial markets">
+    <meta name="keywords" content="financial analytics, market intelligence, investment research, quantitative finance">
+    <link rel="canonical" href="https://app.ysanalytics.me">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXX');
+    </script>
+</head>
+""", unsafe_allow_html=True)
+
+# ==================
+# STYLE IMPROVEMENTS
+# ==================
+st.markdown("""
+<style>
+/* Unified card styling */
+.card {
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, #0A1F44 0%, #152852 100%);
+    border: 1px solid #00C2FF;
+    margin-bottom: 25px;
+    color: white;
+}
+
+/* Improved tech tags */
+.tech-tag {
+    display: inline-block;
+    background-color: rgba(0, 194, 255, 0.15);
+    color: #00C2FF;
+    border-radius: 4px;
+    padding: 4px 12px;
+    margin: 4px 2px;
+    font-size: 0.8em;
+    font-weight: 500;
+    border: 1px solid rgba(0, 194, 255, 0.3);
+}
+
+/* Button enhancements */
+.stButton>button {
+    background: linear-gradient(to right, #00C2FF, #0077B6);
+    color: white !important;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,194,255,0.25);
+}
+
+/* Responsive fixes for mobile */
+@media (max-width: 768px) {
+    .col1, .col2, .col3 {
+        min-width: 100% !important;
+    }
+    .stImage {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ================
+# HEADER SECTION
+# ================
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
-# Page header
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image(LOGO_URL, width=150)
@@ -11,10 +97,12 @@ with col2:
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
 
-# Mission statement
+# ===================
+# MISSION STATEMENT
+# ===================
 st.markdown("""
 <div class="card">
-    <h2>Precision Analytics for Financial Markets</h2>
+    <h2 style="color: #00C2FF; border-bottom: 2px solid #00C2FF; padding-bottom: 10px;">Precision Analytics for Financial Markets</h2>
     <p>We transform complex market data into actionable intelligence through:</p>
     <ul>
         <li><strong>Quantitative Research</strong> • Algorithmic market analysis</li>
@@ -25,7 +113,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Featured projects
+# =================
+# FEATURED PROJECTS
+# =================
 st.header("Featured Analytics Projects")
 st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
 
@@ -46,8 +136,7 @@ with col1:
     
     # Create link to project section
     if st.button("View Project", key="p1", use_container_width=True):
-        st.session_state.navigate_to = "options"
-        st.switch_page("pages/2_Projects.py")
+        st.switch_page("pages/2_📚_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -65,8 +154,7 @@ with col2:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p2", use_container_width=True):
-        st.session_state.navigate_to = "sector"
-        st.switch_page("pages/2_Projects.py")
+        st.switch_page("pages/2_📚_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -84,43 +172,30 @@ with col3:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p3", use_container_width=True):
-        st.session_state.navigate_to = "macro"
-        st.switch_page("pages/2_Projects.py")
+        st.switch_page("pages/2_📚_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Call to action
+# ================
+# CALL TO ACTION
+# ================
 st.markdown("---")
 cta_cols = st.columns(3)
 with cta_cols[0]:
-    st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+    st.page_link("pages/2_📚_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
 with cta_cols[1]:
-    st.page_link("pages/3_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
+    st.page_link("pages/3_📈_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
-    st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
+    st.page_link("pages/5_✉️_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
-# Footer
+# ================
+# FOOTER SECTION
+# ================
 st.markdown("---")
 footer_cols = st.columns(3)
 with footer_cols[0]:
-    st.markdown("**© 2024 YS Analytics**")
+    st.markdown("**© 2025 YS Analytics**")
 with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
-
-# Custom CSS for tech tags
-st.markdown("""
-<style>
-.tech-tag {
-    display: inline-block;
-    background-color: #0A1F44;
-    color: #00C2FF;
-    border-radius: 12px;
-    padding: 2px 10px;
-    margin: 2px;
-    font-size: 0.8em;
-    font-weight: 500;
-}
-</style>
-""", unsafe_allow_html=True)
