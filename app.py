@@ -136,7 +136,7 @@ with col1:
     
     # Create link to project section
     if st.button("View Project", key="p1", use_container_width=True):
-        st.switch_page("pages/2_📚_Projects.py")
+        st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -154,7 +154,7 @@ with col2:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p2", use_container_width=True):
-        st.switch_page("pages/2_📚_Projects.py")
+        st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -172,7 +172,7 @@ with col3:
     """, unsafe_allow_html=True)
     
     if st.button("View Project", key="p3", use_container_width=True):
-        st.switch_page("pages/2_📚_Projects.py")
+        st.switch_page("pages/2_Projects.py")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -182,11 +182,11 @@ with col3:
 st.markdown("---")
 cta_cols = st.columns(3)
 with cta_cols[0]:
-    st.page_link("pages/2_📚_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
+    st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", use_container_width=True)
 with cta_cols[1]:
-    st.page_link("pages/3_📈_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
+    st.page_link("pages/3_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
-    st.page_link("pages/5_✉️_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
+    st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
 
 # ================
 # FOOTER SECTION
