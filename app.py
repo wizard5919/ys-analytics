@@ -232,8 +232,16 @@ height="0" width="0" style="display:none;visibility:hidden" id="iframe-gtm"></if
 # ================
 col1, col2 = st.columns([1, 3])
 with col1:
-    st.image(logo_img, width=150, output_format='PNG', use_column_width='auto', 
-            caption="YS Analytics Logo", clamp=False, channels='RGB')
+    # FIXED: Replaced deprecated use_column_width with use_container_width
+    st.image(
+        logo_img, 
+        width=150, 
+        output_format='PNG', 
+        use_container_width=True,  # Updated parameter
+        caption="YS Analytics Logo", 
+        clamp=False, 
+        channels='RGB'
+    )
 with col2:
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
