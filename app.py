@@ -1,95 +1,16 @@
 import streamlit as st
-import requests
-from PIL import Image
-import io
+
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
-# Cache logo to reduce network calls
-@st.cache_data(ttl=86400, show_spinner=False)
-def load_logo(url):
-    try:
-        response = requests.get(url, timeout=5)
-        return Image.open(io.BytesIO(response.content))
-    except:
-        # Fallback to a solid color image
-        return Image.new('RGB', (150, 150), color='#0A1F44')
-logo_img = load_logo(LOGO_URL)
-# Page config
-st.set_page_config(
-    page_title="YS Analytics - Financial Market Intelligence",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-# Custom CSS
-st.markdown("""
-<style>
-:root {
-    --primary: #00C2FF;
-    --dark-bg: #0A1F44;
-    --darker-bg: #152852;
-    --text-light: #FFFFFF;
-}
-/* Unified card styling */
-.card {
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    background: linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
-    border: 1px solid var(--primary);
-    margin-bottom: 25px;
-    color: var(--text-light);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-.card h2, .card h3 {
-    color: #00C2FF;
-}
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0,194,255,0.2);
-}
-/* Tech tags */
-.tech-tag {
-    display: inline-block;
-    background-color: rgba(0, 194, 255, 0.15);
-    color: var(--primary);
-    border-radius: 4px;
-    padding: 4px 12px;
-    margin: 4px 2px;
-    font-size: 0.8em;
-    font-weight: 500;
-    border: 1px solid rgba(0, 194, 255, 0.3);
-    transition: all 0.2s ease;
-}
-.tech-tag:hover {
-    background-color: rgba(0, 194, 255, 0.3);
-    transform: scale(1.05);
-}
-/* Button enhancements */
-.stButton > button {
-    background: linear-gradient(to right, var(--primary), #0077B6);
-    color: var(--text-light) !important;
-    border: none;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    width: 100%;
-}
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,194,255,0.25);
-}
-</style>
-""", unsafe_allow_html=True)
+
 # Page header
 col1, col2 = st.columns([1, 3])
 with col1:
-    st.image(logo_img, width=150)
+    st.image(LOGO_URL, width=150)
 with col2:
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
+
 # Mission statement
 st.markdown("""
 <div class="card">
@@ -103,10 +24,13 @@ st.markdown("""
     </ul>
 </div>
 """, unsafe_allow_html=True)
+
 # Featured projects
 st.header("Featured Analytics Projects")
 st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
+
 col1, col2, col3 = st.columns(3)
+
 # Project 1 - Options Analytics Suite
 with col1:
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -119,13 +43,14 @@ with col1:
         <span class="tech-tag">QuantLib</span>
     </div>
     """, unsafe_allow_html=True)
-   
+    
     # Create link to project section
     if st.button("View Project", key="p1", use_container_width=True):
         st.session_state.navigate_to = "options"
         st.switch_page("pages/2_Projects.py")
-   
+    
     st.markdown("</div>", unsafe_allow_html=True)
+
 # Project 2 - Market Sector Classifier
 with col2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -138,12 +63,13 @@ with col2:
         <span class="tech-tag">Plotly</span>
     </div>
     """, unsafe_allow_html=True)
-   
+    
     if st.button("View Project", key="p2", use_container_width=True):
         st.session_state.navigate_to = "sector"
         st.switch_page("pages/2_Projects.py")
-   
+    
     st.markdown("</div>", unsafe_allow_html=True)
+
 # Project 3 - Macroeconomic Dashboard
 with col3:
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -156,12 +82,13 @@ with col3:
         <span class="tech-tag">Altair</span>
     </div>
     """, unsafe_allow_html=True)
-   
+    
     if st.button("View Project", key="p3", use_container_width=True):
         st.session_state.navigate_to = "macro"
         st.switch_page("pages/2_Projects.py")
-   
+    
     st.markdown("</div>", unsafe_allow_html=True)
+
 # Call to action
 st.markdown("---")
 cta_cols = st.columns(3)
@@ -171,12 +98,29 @@ with cta_cols[1]:
     st.page_link("pages/3_Dashboard.py", label="Live Market Dashboard", icon="📈", use_container_width=True)
 with cta_cols[2]:
     st.page_link("pages/5_Contact.py", label="Schedule Consultation", icon="✉️", use_container_width=True)
+
 # Footer
 st.markdown("---")
 footer_cols = st.columns(3)
 with footer_cols[0]:
-    st.markdown("**© 2025 YS Analytics**")
+    st.markdown("**© 2024 YS Analytics**")
 with footer_cols[1]:
     st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
+# Custom CSS for tech tags
+st.markdown("""
+<style>
+.tech-tag {
+    display: inline-block;
+    background-color: #0A1F44;
+    color: #00C2FF;
+    border-radius: 12px;
+    padding: 2px 10px;
+    margin: 2px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+</style>
+""", unsafe_allow_html=True)
