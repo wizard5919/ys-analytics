@@ -65,7 +65,7 @@ st.set_page_config(
 )
 
 # Add SEO meta tags
-st.markdown("""
+st.markdown(f"""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -78,7 +78,7 @@ st.markdown("""
     <!-- Open Graph Tags for Social Sharing -->
     <meta property="og:title" content="YS Analytics - Financial Market Intelligence">
     <meta property="og:description" content="Quantitative research, predictive modeling, and interactive dashboards for financial markets">
-    <meta property="og:image" content="https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png">
+    <meta property="og:image" content="{LOGO_URL}">
     <meta property="og:url" content="https://app.ysanalytics.me">
     <meta property="og:type" content="website">
     
@@ -89,25 +89,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================
-# STYLE IMPROVEMENTS
+# STYLE IMPROVEMENTS (FIXED)
 # ==================
-st.markdown("""
+# Using f-string with double braces for CSS escaping
+css_style = f"""
 <style>
-:root {
+:root {{
     --primary: #00C2FF;
     --dark-bg: #0A1F44;
     --darker-bg: #152852;
     --text-light: #FFFFFF;
-}
+}}
 
 /* Google Tag Manager iframe */
-#iframe-gtm {
+#iframe-gtm {{
     display: none;
     visibility: hidden;
-}
+}}
 
 /* Unified card styling */
-.card {
+.card {{
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -119,19 +120,19 @@ st.markdown("""
     height: 100%;
     display: flex;
     flex-direction: column;
-}
+}}
 
-.card-content {
+.card-content {{
     flex-grow: 1;
-}
+}}
 
-.card:hover {
+.card:hover {{
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0,194,255,0.2);
-}
+}}
 
 /* Improved tech tags */
-.tech-tag {
+.tech-tag {{
     display: inline-block;
     background-color: rgba(0, 194, 255, 0.15);
     color: var(--primary);
@@ -142,86 +143,89 @@ st.markdown("""
     font-weight: 500;
     border: 1px solid rgba(0, 194, 255, 0.3);
     transition: all 0.2s ease;
-}
+}}
 
-.tech-tag:hover {
+.tech-tag:hover {{
     background-color: rgba(0, 194, 255, 0.3);
     transform: scale(1.05);
-}
+}}
 
 /* Button enhancements */
-.stButton>button {
+.stButton>button {{
     background: linear-gradient(to right, var(--primary), #0077B6);
     color: var(--text-light) !important;
     border: none;
     transition: all 0.3s ease;
     font-weight: 600;
     width: 100%;
-}
+}}
 
-.stButton>button:hover {
+.stButton>button:hover {{
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0,194,255,0.25);
-}
+}}
 
 /* Card grid for responsiveness */
-.card-grid {
+.card-grid {{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
-}
+}}
 
 /* Responsive fixes for mobile */
-@media (max-width: 768px) {
-    .card-grid {
+@media (max-width: 768px) {{
+    .card-grid {{
         grid-template-columns: 1fr;
-    }
+    }}
     
-    .stImage {
+    .stImage {{
         text-align: center;
         margin-bottom: 20px;
-    }
+    }}
     
-    .card {
+    .card {{
         padding: 15px;
-    }
+    }}
     
-    .footer-cols {
+    .footer-cols {{
         flex-direction: column;
         gap: 10px;
-    }
-}
+    }}
+}}
 
 /* Footer styling */
-footer {
+footer {{
     padding: 20px 0;
     font-size: 0.9em;
-}
+}}
 
-.footer-cols {
+.footer-cols {{
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-}
+}}
 
 /* Accessibility Improvements */
-a:focus, button:focus {
+a:focus, button:focus {{
     outline: 2px solid var(--primary);
     outline-offset: 2px;
-}
+}}
 
 /* Performance optimizations */
-img {
+img {{
     max-width: 100%;
     height: auto;
-}
+}}
 </style>
+"""
 
+# Combine CSS with noscript tag
+st.markdown(css_style + f"""
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={GTM_ID}"
 height="0" width="0" style="display:none;visibility:hidden" id="iframe-gtm"></iframe></noscript>
-""".format(GTM_ID=GTM_ID), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ================
 # HEADER SECTION
