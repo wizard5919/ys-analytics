@@ -1,5 +1,13 @@
 import streamlit as st
+# Add verification tag to HTML head
+st.markdown("""
+    <head>
+        <meta name="google-site-verification" content="your_unique_verification_code_here" />
+    </head>
+""", unsafe_allow_html=True)
 
+# Your existing app code below
+st.title("YS Analytics")
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 
