@@ -89,7 +89,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==================
-# STYLE IMPROVEMENTS (FIXED)
+# STYLE IMPROVEMENTS
 # ==================
 # Using f-string with double braces for CSS escaping
 css_style = f"""
@@ -232,12 +232,11 @@ height="0" width="0" style="display:none;visibility:hidden" id="iframe-gtm"></if
 # ================
 col1, col2 = st.columns([1, 3])
 with col1:
-    # FIXED: Replaced deprecated use_column_width with use_container_width
     st.image(
         logo_img, 
         width=150, 
         output_format='PNG', 
-        use_container_width=True,  # Updated parameter
+        use_container_width=True,
         caption="YS Analytics Logo", 
         clamp=False, 
         channels='RGB'
