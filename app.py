@@ -58,8 +58,10 @@ if "analytics_initialized" not in st.session_state:
           gtag('config', '{GA_ID}');
         </script>
     """, unsafe_allow_html=True)
-# Add SEO meta tags
+# Add SEO meta tags - FIXED STRUCTURE
 st.markdown(f"""
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -68,19 +70,24 @@ st.markdown(f"""
     <meta name="keywords" content="financial analytics, market intelligence, investment research, quantitative finance">
     <meta name="author" content="YS Analytics">
     <link rel="canonical" href="https://app.ysanalytics.me">
-   
+    
     <!-- Open Graph Tags for Social Sharing -->
     <meta property="og:title" content="YS Analytics - Financial Market Intelligence">
     <meta property="og:description" content="Quantitative research, predictive modeling, and interactive dashboards for financial markets">
     <meta property="og:image" content="{LOGO_URL}">
     <meta property="og:url" content="https://app.ysanalytics.me">
     <meta property="og:type" content="website">
-   
+    
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:creator" content="@ys_analytics">
+    <title>YS Analytics - Financial Market Intelligence</title>
 </head>
+<body>
+</body>
+</html>
 """, unsafe_allow_html=True)
+
 # ==================
 # STYLE IMPROVEMENTS
 # ==================
