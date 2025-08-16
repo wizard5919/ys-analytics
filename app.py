@@ -79,7 +79,6 @@ st.markdown(f"""
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:creator" content="@ys_analytics">
-    <title>YS Analytics - Financial Market Intelligence</title>
 </head>
 """, unsafe_allow_html=True)
 # ==================
