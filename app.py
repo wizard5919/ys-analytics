@@ -1,7 +1,31 @@
 import streamlit as st
 
 # ==============================
-# SEO & VERIFICATION IMPROVEMENTS
+# GOOGLE ANALYTICS INITIALIZATION
+# ==============================
+if "analytics_initialized" not in st.session_state:
+    st.session_state.analytics_initialized = True
+    st.markdown("""
+        <!-- Google Tag Manager -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-XXXXXX');</script>
+        <!-- End Google Tag Manager -->
+        
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXX"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-XXXXXX');
+        </script>
+    """, unsafe_allow_html=True)
+
+# ==============================
+# PAGE CONFIG & SEO OPTIMIZATION
 # ==============================
 st.set_page_config(
     page_title="YS Analytics - Financial Market Intelligence",
@@ -10,22 +34,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Add SEO meta tags and verification
-st.markdown(f"""
+# Add SEO meta tags
+st.markdown("""
 <head>
     <meta name="google-site-verification" content="f58608a8571b51fd" />
     <meta name="description" content="Quantitative research, predictive modeling, and interactive dashboards for financial markets">
     <meta name="keywords" content="financial analytics, market intelligence, investment research, quantitative finance">
     <link rel="canonical" href="https://app.ysanalytics.me">
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXX');
-    </script>
 </head>
 """, unsafe_allow_html=True)
 
@@ -34,6 +49,12 @@ st.markdown(f"""
 # ==================
 st.markdown("""
 <style>
+/* Google Tag Manager iframe */
+#iframe-gtm {
+    display: none;
+    visibility: hidden;
+}
+
 /* Unified card styling */
 .card {
     padding: 20px;
@@ -43,6 +64,12 @@ st.markdown("""
     border: 1px solid #00C2FF;
     margin-bottom: 25px;
     color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,194,255,0.2);
 }
 
 /* Improved tech tags */
@@ -56,6 +83,12 @@ st.markdown("""
     font-size: 0.8em;
     font-weight: 500;
     border: 1px solid rgba(0, 194, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+.tech-tag:hover {
+    background-color: rgba(0, 194, 255, 0.3);
+    transform: scale(1.05);
 }
 
 /* Button enhancements */
@@ -64,6 +97,7 @@ st.markdown("""
     color: white !important;
     border: none;
     transition: all 0.3s ease;
+    font-weight: 600;
 }
 
 .stButton>button:hover {
@@ -80,8 +114,21 @@ st.markdown("""
         text-align: center;
         margin-bottom: 20px;
     }
+    .card {
+        padding: 15px;
+    }
+}
+
+/* Footer styling */
+footer {
+    padding: 20px 0;
+    font-size: 0.9em;
 }
 </style>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXX"
+height="0" width="0" style="display:none;visibility:hidden" id="iframe-gtm"></iframe></noscript>
 """, unsafe_allow_html=True)
 
 # ================
@@ -102,12 +149,12 @@ with col2:
 # ===================
 st.markdown("""
 <div class="card">
-    <h2 style="color: #00C2FF; border-bottom: 2px solid #00C2FF; padding-bottom: 10px;">Precision Analytics for Financial Markets</h2>
-    <p>We transform complex market data into actionable intelligence through:</p>
+    <h2 style="color: #00C2FF; border-bottom: 2px solid #00C2FF; padding-bottom: 10px; margin-top: 0;">Precision Analytics for Financial Markets</h2>
+    <p style="font-size: 1.1em;">We transform complex market data into actionable intelligence through:</p>
     <ul>
-        <li><strong>Quantitative Research</strong> • Algorithmic market analysis</li>
-        <li><strong>Predictive Modeling</strong> • Machine learning-driven forecasts</li>
-        <li><strong>Strategic Visualization</strong> • Interactive financial dashboards</li>
+        <li style="margin-bottom: 10px;"><strong>Quantitative Research</strong> • Algorithmic market analysis</li>
+        <li style="margin-bottom: 10px;"><strong>Predictive Modeling</strong> • Machine learning-driven forecasts</li>
+        <li style="margin-bottom: 10px;"><strong>Strategic Visualization</strong> • Interactive financial dashboards</li>
         <li><strong>Risk Analytics</strong> • Options pricing and volatility insights</li>
     </ul>
 </div>
@@ -127,7 +174,7 @@ with col1:
     st.subheader("Options Analytics Suite")
     st.markdown("Real-time Greeks calculation and volatility surface visualization")
     st.markdown("""
-    <div style="margin: 10px 0;">
+    <div style="margin: 15px 0;">
         <span class="tech-tag">Python</span>
         <span class="tech-tag">Streamlit</span>
         <span class="tech-tag">QuantLib</span>
@@ -146,7 +193,7 @@ with col2:
     st.subheader("Market Sector Classifier")
     st.markdown("ML-driven sector analysis using price movement patterns")
     st.markdown("""
-    <div style="margin: 10px 0;">
+    <div style="margin: 15px 0;">
         <span class="tech-tag">Scikit-learn</span>
         <span class="tech-tag">TA-Lib</span>
         <span class="tech-tag">Plotly</span>
@@ -164,7 +211,7 @@ with col3:
     st.subheader("Macroeconomic Dashboard")
     st.markdown("Global economic indicators with forecasting capabilities")
     st.markdown("""
-    <div style="margin: 10px 0;">
+    <div style="margin: 15px 0;">
         <span class="tech-tag">FRED API</span>
         <span class="tech-tag">Prophet</span>
         <span class="tech-tag">Altair</span>
@@ -196,6 +243,6 @@ footer_cols = st.columns(3)
 with footer_cols[0]:
     st.markdown("**© 2025 YS Analytics**")
 with footer_cols[1]:
-    st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
+    st.markdown("[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/wizard5919) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin)](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
