@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.env
+node_modules/
+npm-debug.log
+*.csv
+*.xlsx
+*.ipynb
+data/
+.git
+.gitignore
+Dockerfile
+render.yaml
