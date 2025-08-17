@@ -20,33 +20,34 @@ load_global_css()
 st.markdown("""
 <style>
     /* Unified card styling */
-    .card {
-        padding: 25px;
+    .project-card {
+        padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         background: #0E1117;
         border: 1px solid #1e3a5f;
         height: 100%;
         display: flex;
         flex-direction: column;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: all 0.3s ease;
         margin-bottom: 25px;
     }
     
-    .card:hover {
+    .project-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 194, 255, 0.2);
+        box-shadow: 0 8px 20px rgba(0, 194, 255, 0.15);
         border-color: #00C2FF;
     }
     
     /* Consistent title styling */
     .project-title {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 700;
         color: #00C2FF;
         margin-top: 0;
         margin-bottom: 15px;
         min-height: 60px;
+        line-height: 1.4;
     }
     
     /* Better tag styling */
@@ -68,7 +69,7 @@ st.markdown("""
         border: none !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        margin-top: 20px;
+        margin-top: auto;
         padding: 10px 20px !important;
         transition: all 0.3s ease !important;
     }
@@ -81,7 +82,7 @@ st.markdown("""
     /* Description styling */
     .project-desc {
         color: #a0aec0;
-        font-size: 1rem;
+        font-size: 0.95rem;
         line-height: 1.5;
         margin: 15px 0;
         min-height: 70px;
@@ -93,13 +94,13 @@ st.markdown("""
     }
     
     .section-subheader {
-        margin-bottom: 40px !important;
+        margin-bottom: 20px !important;
     }
     
     /* Footer styling */
     .footer {
-        margin-top: 60px;
-        padding-top: 25px;
+        margin-top: 50px;
+        padding-top: 20px;
         border-top: 1px solid #1e3a5f;
         font-size: 0.9rem;
     }
@@ -108,8 +109,18 @@ st.markdown("""
     .project-image {
         border-radius: 8px;
         overflow: hidden;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         border: 1px solid #1e3a5f;
+        height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .project-image img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
     }
     
     /* Tag container */
@@ -130,11 +141,31 @@ st.markdown("""
     .logo-container {
         margin-bottom: 20px;
     }
+    
+    /* Search bar styling */
+    .search-container {
+        margin-bottom: 30px;
+    }
+    
+    /* Content container */
+    .content-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    /* Column spacing */
+    .stColumn > div {
+        padding: 0 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Render sidebar
 render_sidebar_navigation()
+
+# Create main content container
+st.markdown('<div class="content-container">', unsafe_allow_html=True)
 
 # Header with consistent logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
@@ -151,8 +182,8 @@ st.markdown('</div>', unsafe_allow_html=True)
 st.markdown("""
 <div class="card">
     <h2 style="color: #00C2FF; border-bottom: 2px solid #00C2FF; padding-bottom: 12px; margin-top: 0;">Precision Analytics for Financial Markets</h2>
-    <p style="font-size: 1.1rem;">We transform complex market data into actionable intelligence through:</p>
-    <ul style="font-size: 1.05rem; line-height: 1.8;">
+    <p style="font-size: 1.05rem;">We transform complex market data into actionable intelligence through:</p>
+    <ul style="font-size: 1.05rem; line-height: 1.8; margin-bottom: 0;">
         <li><strong>Quantitative Research</strong> • Algorithmic market analysis</li>
         <li><strong>Predictive Modeling</strong> • Machine learning-driven forecasts</li>
         <li><strong>Strategic Visualization</strong> • Interactive financial dashboards</li>
@@ -169,8 +200,10 @@ st.markdown("***Select case studies demonstrating our financial analytics capabi
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Add search component
+st.markdown('<div class="search-container">', unsafe_allow_html=True)
 st.markdown("**AI-Powered Search: Find Projects**")
 st.caption("e.g., 'options' or 'ML'")
+st.markdown('</div>', unsafe_allow_html=True)
 
 projects = [
     {"title": "Options Analytics Suite", "icon": "📈", "desc": "Real-time Greeks calculation and volatility surface visualization", "tags": ["Python", "Streamlit", "QuantLib"], "preview_url": "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/options-preview.png", "link": "pages/2_Projects.py"},
@@ -180,10 +213,10 @@ projects = [
 
 filtered_projects = render_project_search(projects)
 
-cols = st.columns(3)
+cols = st.columns(3, gap="medium")
 for i, proj in enumerate(filtered_projects):
-    with cols[i % 3]:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+    with cols[i]:
+        st.markdown('<div class="project-card">', unsafe_allow_html=True)
         
         # Project title with icon
         st.markdown(f'<div class="project-title">{proj["icon"]} {proj["title"]}</div>', unsafe_allow_html=True)
@@ -213,7 +246,7 @@ for i, proj in enumerate(filtered_projects):
 # CTA section
 st.markdown('<div class="section-header"></div>', unsafe_allow_html=True)
 st.markdown("---")
-cta_cols = st.columns(3)
+cta_cols = st.columns(3, gap="medium")
 with cta_cols[0]:
     st.page_link("pages/2_Projects.py", label="Explore Full Portfolio", icon="📚", 
                 use_container_width=True, help="View all our analytics projects")
@@ -227,7 +260,7 @@ with cta_cols[2]:
 # Footer
 st.markdown('<div class="footer"></div>', unsafe_allow_html=True)
 st.markdown("---")
-footer_cols = st.columns(3)
+footer_cols = st.columns([2, 3, 2])
 with footer_cols[0]:
     st.markdown("**© 2025 YS Analytics**")
 with footer_cols[1]:
@@ -243,3 +276,5 @@ with footer_cols[1]:
     """, unsafe_allow_html=True)
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
+
+st.markdown('</div>', unsafe_allow_html=True)  # Close content container
