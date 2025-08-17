@@ -1,5 +1,6 @@
+# app.py (Fixed: Replaced use_column_width with use_container_width in st.image)
 import streamlit as st
-from utils import load_global_css, render_sidebar_navigation, render_project_search  # FIXED: Added render_project_search
+from utils import load_global_css, render_sidebar_navigation, render_project_search
 
 # Analytics init (unchanged)
 if "analytics_initialized" not in st.session_state:
@@ -52,14 +53,14 @@ projects = [
     {"title": "🌍 Macroeconomic Dashboard", "desc": "Global economic indicators with forecasting capabilities", "tags": ["FRED API", "Prophet", "Altair"], "preview_url": "https://via.placeholder.com/300x200?text=Macro+Dashboard", "link": "pages/2_Projects.py"}
 ]
 
-filtered_projects = render_project_search(projects)  # This line (55) now works with the import
+filtered_projects = render_project_search(projects)
 
 cols = st.columns(3)
 for i, proj in enumerate(filtered_projects):
     with cols[i % 3]:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader(proj["title"])
-        st.image(proj["preview_url"], use_column_width=True)  # Added preview
+        st.image(proj["preview_url"], use_container_width=True)  # FIXED: Changed to use_container_width
         st.markdown(proj["desc"])
         st.markdown(" ".join([f'<span class="tech-tag">{tag}</span>' for tag in proj["tags"]]), unsafe_allow_html=True)
         if st.button("🔍 View Project", key=f"p{i}", use_container_width=True):
