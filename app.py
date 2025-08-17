@@ -39,7 +39,9 @@ with col1:
     """, unsafe_allow_html=True)
   
     # Create link to project section
-    st.page_link("pages/2_Projects.py", label="View Project", icon="📄", use_container_width=True)
+    if st.button("View Project", key="p1", use_container_width=True):
+        st.session_state.navigate_to = "options"
+        st.switch_page("pages/2_Projects.py")
   
     st.markdown("</div>", unsafe_allow_html=True)
 # Project 2 - Market Sector Classifier
@@ -55,7 +57,9 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
   
-    st.page_link("pages/2_Projects.py", label="View Project", icon="📄", use_container_width=True)
+    if st.button("View Project", key="p2", use_container_width=True):
+        st.session_state.navigate_to = "sector"
+        st.switch_page("pages/2_Projects.py")
   
     st.markdown("</div>", unsafe_allow_html=True)
 # Project 3 - Macroeconomic Dashboard
@@ -71,7 +75,9 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
   
-    st.page_link("pages/2_Projects.py", label="View Project", icon="📄", use_container_width=True)
+    if st.button("View Project", key="p3", use_container_width=True):
+        st.session_state.navigate_to = "macro"
+        st.switch_page("pages/2_Projects.py")
   
     st.markdown("</div>", unsafe_allow_html=True)
 # Call to action
