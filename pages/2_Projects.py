@@ -1,13 +1,11 @@
 import streamlit as st
-
 st.title("Project Portfolio")
 st.markdown("""
 Explore our financial analytics projects demonstrating expertise in market analysis, 
 predictive modeling, and data visualization.
 """)
-
-# Project 1
-with st.expander("Options Analytics Suite", expanded=True):
+# Project 1 - Options Analytics Suite
+with st.expander("Options Analytics Suite"):
     st.markdown("""
     <div class="card">
         <h3>Advanced Options Pricing & Risk Analysis</h3>
@@ -21,13 +19,12 @@ with st.expander("Options Analytics Suite", expanded=True):
         </ul>
         <p><strong>Technologies:</strong> Python, QuantLib, Streamlit, Plotly</p>
         <div style="display: flex; gap: 10px;">
-            <a href="pages/6_Options_Analyzer.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Live Demo</a>
-            <a href="https://github.com/wizard5919/options_analyzerPublic" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">GitHub Repository</a>
+            <a href="/Options_Analyzer" target="_self" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Live Demo</a>
+            <a href="https://github.com/wizard5919/options_analyzerPublic" target="_blank" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">GitHub Repository</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-# Project 2
+# Project 2 - Market Sector Classifier
 with st.expander("Market Sector Classifier"):
     st.markdown("""
     <div class="card">
@@ -42,13 +39,12 @@ with st.expander("Market Sector Classifier"):
         </ul>
         <p><strong>Technologies:</strong> Python, Scikit-learn, TA-Lib, Plotly</p>
         <div style="display: flex; gap: 10px;">
-            <a href="pages/7_Sector_Classifier.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Case Study</a>
-            <a href="https://example.com/research-paper.pdf" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Research Paper</a>
+            <a href="/Sector_Classifier" target="_self" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">View Case Study</a>
+            <a href="https://example.com/research-paper.pdf" target="_blank" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Research Paper</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-# Project 3
+# Project 3 - Macroeconomic Dashboard
 with st.expander("Macroeconomic Dashboard"):
     st.markdown("""
     <div class="card">
@@ -63,11 +59,10 @@ with st.expander("Macroeconomic Dashboard"):
         </ul>
         <p><strong>Technologies:</strong> Python, FRED API, Prophet, Altair</p>
         <div style="display: flex; gap: 10px;">
-            <a href="pages/8_Macro_Dashboard.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Explore Dashboard</a>
+            <a href="/Macro_Dashboard" target="_self" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Explore Dashboard</a>
             <a href="pages/9_Methodology.py" style="flex: 1; background-color: #00C2FF; color: #0A1F44; border-radius: 8px; padding: 0.5rem 1.5rem; font-weight: 600; text-decoration: none;">Methodology</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
 st.markdown("---")
-st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+st.page_link("app.py", label="← Back to Home", icon="🏠")
