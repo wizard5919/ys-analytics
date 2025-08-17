@@ -1,9 +1,26 @@
 import streamlit as st
+from utils import load_global_css, render_sidebar_navigation
 
-# GitHub raw URL for your logo
-LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
+# Analytics init (unchanged)
+if "analytics_initialized" not in st.session_state:
+    st.session_state.analytics_initialized = True
+    st.markdown("""<!-- Google Tag Manager and Analytics code -->""", unsafe_allow_html=True)
 
-# Page header
+st.set_page_config(
+    page_title="YS Analytics - Financial Market Intelligence",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Load global CSS
+load_global_css()
+
+# Render sidebar
+render_sidebar_navigation()
+
+# Header with consistent logo
+LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"  # Ensure high-res
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image(LOGO_URL, width=150)
@@ -11,10 +28,10 @@ with col2:
     st.title("YS Analytics")
     st.markdown("**Data-Driven Market Intelligence**")
 
-# Mission statement
+# Mission statement card
 st.markdown("""
 <div class="card">
-    <h2>Precision Analytics for Financial Markets</h2>
+    <h2 style="color: #00C2FF; border-bottom: 2px solid #00C2FF; padding-bottom: 10px;">Precision Analytics for Financial Markets</h2>
     <p>We transform complex market data into actionable intelligence through:</p>
     <ul>
         <li><strong>Quantitative Research</strong> • Algorithmic market analysis</li>
@@ -25,71 +42,31 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Featured projects
+# Featured Projects with search and previews
 st.header("Featured Analytics Projects")
 st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
 
-col1, col2, col3 = st.columns(3)
+projects = [
+    {"title": "📈 Options Analytics Suite", "desc": "Real-time Greeks calculation and volatility surface visualization", "tags": ["Python", "Streamlit", "QuantLib"], "preview_url": "https://via.placeholder.com/300x200?text=Options+Chart", "link": "pages/2_Projects.py"},
+    {"title": "🤖 Market Sector Classifier", "desc": "ML-driven sector analysis using price movement patterns", "tags": ["Scikit-learn", "TA-Lib", "Plotly"], "preview_url": "https://via.placeholder.com/300x200?text=ML+Model", "link": "pages/2_Projects.py"},
+    {"title": "🌍 Macroeconomic Dashboard", "desc": "Global economic indicators with forecasting capabilities", "tags": ["FRED API", "Prophet", "Altair"], "preview_url": "https://via.placeholder.com/300x200?text=Macro+Dashboard", "link": "pages/2_Projects.py"}
+]
 
-# Project 1 - Options Analytics Suite
-with col1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Options Analytics Suite")
-    st.markdown("Real-time Greeks calculation and volatility surface visualization")
-    st.markdown("""
-    <div style="margin: 10px 0;">
-        <span class="tech-tag">Python</span>
-        <span class="tech-tag">Streamlit</span>
-        <span class="tech-tag">QuantLib</span>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Create link to project section
-    if st.button("View Project", key="p1", use_container_width=True):
-        st.session_state.navigate_to = "options"
-        st.switch_page("pages/2_Projects.py")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+filtered_projects = render_project_search(projects)
 
-# Project 2 - Market Sector Classifier
-with col2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Market Sector Classifier")
-    st.markdown("ML-driven sector analysis using price movement patterns")
-    st.markdown("""
-    <div style="margin: 10px 0;">
-        <span class="tech-tag">Scikit-learn</span>
-        <span class="tech-tag">TA-Lib</span>
-        <span class="tech-tag">Plotly</span>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if st.button("View Project", key="p2", use_container_width=True):
-        st.session_state.navigate_to = "sector"
-        st.switch_page("pages/2_Projects.py")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+cols = st.columns(3)
+for i, proj in enumerate(filtered_projects):
+    with cols[i % 3]:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader(proj["title"])
+        st.image(proj["preview_url"], use_column_width=True)  # Added preview
+        st.markdown(proj["desc"])
+        st.markdown(" ".join([f'<span class="tech-tag">{tag}</span>' for tag in proj["tags"]]), unsafe_allow_html=True)
+        if st.button("🔍 View Project", key=f"p{i}", use_container_width=True):
+            st.switch_page(proj["link"])
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# Project 3 - Macroeconomic Dashboard
-with col3:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Macroeconomic Dashboard")
-    st.markdown("Global economic indicators with forecasting capabilities")
-    st.markdown("""
-    <div style="margin: 10px 0;">
-        <span class="tech-tag">FRED API</span>
-        <span class="tech-tag">Prophet</span>
-        <span class="tech-tag">Altair</span>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if st.button("View Project", key="p3", use_container_width=True):
-        st.session_state.navigate_to = "macro"
-        st.switch_page("pages/2_Projects.py")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# Call to action
+# CTA
 st.markdown("---")
 cta_cols = st.columns(3)
 with cta_cols[0]:
@@ -103,24 +80,8 @@ with cta_cols[2]:
 st.markdown("---")
 footer_cols = st.columns(3)
 with footer_cols[0]:
-    st.markdown("**© 2024 YS Analytics**")
+    st.markdown("**© 2025 YS Analytics**")
 with footer_cols[1]:
-    st.markdown("[GitHub](https://github.com/wizard5919) • [LinkedIn](https://linkedin.com)")
+    st.markdown("[<i class='fab fa-github'></i> GitHub](https://github.com/wizard5919) • [<i class='fab fa-linkedin'></i> LinkedIn](https://linkedin.com)")
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
-
-# Custom CSS for tech tags
-st.markdown("""
-<style>
-.tech-tag {
-    display: inline-block;
-    background-color: #0A1F44;
-    color: #00C2FF;
-    border-radius: 12px;
-    padding: 2px 10px;
-    margin: 2px;
-    font-size: 0.8em;
-    font-weight: 500;
-}
-</style>
-""", unsafe_allow_html=True)
