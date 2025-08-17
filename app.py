@@ -132,6 +132,6 @@ with st.sidebar:
         st.page_link("pages/4_Insights.py", label="Insights", icon="💡")
         st.page_link("pages/5_Contact.py", label="Contact", icon="✉️")
     with st.expander("Tools & Demos", expanded=False):
-        st.page_link("pages/Options_Analyzer.py", label="Options Analyzer", icon="📊")
-        st.page_link("pages/Sector_Classifier.py", label="Sector Classifier", icon="🤖")
-        st.page_link("pages/Macro_Dashboard.py", label="Macro Dashboard", icon="🌍")
+        st.page_link("pages/6_Options_Analyzer.py", label="Options Analyzer", icon="📊")
+        st.page_link("pages/7_Sector_Classifier.py", label="Sector Classifier", icon="🤖")
+        st.page_link("pages/8_Macro_Dashboard.py", label="Macro Dashboard", icon="🌍")
