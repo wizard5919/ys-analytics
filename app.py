@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 # GitHub raw URL for your logo
-LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.py"
+LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 # Page header
 col1, col2 = st.columns([1, 3])
 with col1:
@@ -124,6 +124,6 @@ with st.sidebar:
         st.page_link("pages/4_Insights.py", label="Insights", icon="💡")
         st.page_link("pages/5_Contact.py", label="Contact", icon="✉️")
     with st.expander("Tools & Demos", expanded=False):
-        st.page_link("pages/Options_Analyzer.py", label="Options Analyzer", icon="📊")
-        st.page_link("pages/Sector_Classifier.py", label="Sector Classifier", icon="🤖")
-        st.page_link("pages/Macro_Dashboard.py", label="Macro Dashboard", icon="🌍")
+        st.page_link("pages/6_Options_Analyzer.py", label="Options Analyzer", icon="📊")
+        st.page_link("pages/7_Sector_Classifier.py", label="Sector Classifier", icon="🤖")
+        st.page_link("pages/8_Macro_Dashboard.py", label="Macro Dashboard", icon="🌍")
