@@ -16,7 +16,7 @@ st.set_page_config(
 # Load global CSS
 load_global_css()
 
-# Add custom styling for perfect layout
+# Add custom styling with button positioning fix
 st.markdown("""
 <style>
     /* Unified card styling */
@@ -31,6 +31,8 @@ st.markdown("""
         height: 100%;
         transition: all 0.3s ease;
         margin-bottom: 25px;
+        position: relative; /* Added for button positioning */
+        min-height: 520px; /* Ensures consistent card height */
     }
     
     .project-card:hover {
@@ -157,9 +159,12 @@ st.markdown("""
         padding: 0 10px;
     }
     
-    /* Button container */
+    /* Button container - fixed to bottom */
     .button-container {
-        margin-top: auto;
+        position: absolute; /* Changed to absolute positioning */
+        bottom: 20px; /* Positions at bottom of card */
+        left: 20px; /* Aligns with card padding */
+        right: 20px; /* Aligns with card padding */
         padding-top: 10px;
     }
 </style>
@@ -238,7 +243,7 @@ for i, proj in enumerate(filtered_projects):
         st.markdown(" ".join([f'<span class="tech-tag">{tag}</span>' for tag in proj["tags"]]), unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # View project button container (pushed to bottom)
+        # View project button container (fixed to bottom)
         st.markdown('<div class="button-container">', unsafe_allow_html=True)
         if st.button("🔍 View Project", key=f"p{i}", 
                     use_container_width=True, 
