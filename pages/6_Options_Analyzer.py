@@ -1,4 +1,3 @@
-
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -15,8 +14,8 @@ from ta.trend import EMAIndicator, MACD
 from ta.volatility import AverageTrueRange, KeltnerChannel
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from polygon import RESTClient  # Polygon API client
-from streamlit_autorefresh import st_autorefresh  # NEW: For auto-refresh
+from polygon import RESTClient
+from streamlit_autorefresh import st_autorefresh
 
 try:
     from scipy import signal
@@ -73,21 +72,19 @@ CONFIG = {
         'scalping': ['1min', '5min'],
         'intraday': ['15min', '30min', '1h']
     },
-    # FIXED: More appropriate sensitivity levels that scale with timeframe
     'SR_SENSITIVITY': {
-        '1min': 0.001,   # Very tight for scalping
-        '5min': 0.002,   # Tight for short-term
-        '15min': 0.003,  # Medium for intraday
-        '30min': 0.005,  # Wider for swing
-        '1h': 0.008      # Widest for longer-term
+        '1min': 0.001,
+        '5min': 0.002,
+        '15min': 0.003,
+        '30min': 0.005,
+        '1h': 0.008
     },
-    # FIXED: Better window sizes for peak detection
     'SR_WINDOW_SIZES': {
-        '1min': 3,   # Smaller window for faster timeframes
+        '1min': 3,
         '5min': 3,
-        '15min': 5,  # Medium window
-        '30min': 7,  # Larger window
-        '1h': 10     # Largest window for smoothing
+        '15min': 5,
+        '30min': 7,
+        '1h': 10
     }
 }
 
@@ -164,11 +161,11 @@ def can_make_request(source: str) -> bool:
                    if t['source'] == "IEX" and now - t['timestamp'] < 3600])
     
     # Enforce rate limits
-    if source == "ALPHA_VANTAGE" and av_count >= 4:  # 5 req/min limit (leaving 1 buffer)
+    if source == "ALPHA_VANTAGE" and av_count >= 4:
         return False
-    if source == "FMP" and fmp_count >= 9:  # 250/day ≈ 10/hour (leaving 1 buffer)
+    if source == "FMP" and fmp_count >= 9:
         return False
-    if source == "IEX" and iex_count >= 29:  # 50k/mo ≈ 30/hour (leaving 1 buffer)
+    if source == "IEX" and iex_count >= 29:
         return False
     
     return True
@@ -193,17 +190,14 @@ def find_peaks_valleys_robust(data: np.array, order: int = 5, prominence: float 
     
     try:
         if SCIPY_AVAILABLE and prominence is not None:
-            # Use scipy for better peak detection with prominence
             peaks, peak_properties = signal.find_peaks(data, distance=order, prominence=prominence)
             valleys, valley_properties = signal.find_peaks(-data, distance=order, prominence=prominence)
             return peaks.tolist(), valleys.tolist()
         else:
-            # Fallback method with improved logic
             peaks = []
             valleys = []
             
             for i in range(order, len(data) - order):
-                # Check for peak
                 is_peak = True
                 for j in range(1, order + 1):
                     if data[i] <= data[i-j] or data[i] <= data[i+j]:
@@ -212,7 +206,6 @@ def find_peaks_valleys_robust(data: np.array, order: int = 5, prominence: float 
                 if is_peak:
                     peaks.append(i)
                 
-                # Check for valley
                 is_valley = True
                 for j in range(1, order + 1):
                     if data[i] >= data[i-j] or data[i] >= data[i+j]:
@@ -235,8 +228,11 @@ def calculate_dynamic_sensitivity(data: pd.DataFrame, base_sensitivity: float) -
             return base_sensitivity
         
         # Calculate price range and volatility
-        price_range = data['High'].max() - data['Low'].min()
         current_price = data['Close'].iloc[-1]
+        
+        # Handle zero/negative current price
+        if current_price <= 0 or np.isnan(current_price):
+            return base_sensitivity
         
         # Calculate ATR-based volatility
         if 'High' in data.columns and 'Low' in data.columns and 'Close' in data.columns:
@@ -321,7 +317,6 @@ def cluster_levels_improved(levels: List[float], current_price: float, sensitivi
         
     except Exception as e:
         st.warning(f"Error clustering levels: {str(e)}")
-        # Return raw levels as fallback
         return [{'price': level, 'strength': 1, 'distance': abs(level - current_price) / current_price, 'type': level_type, 'raw_levels': [level]} for level in levels[:5]]
 
 def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, current_price: float) -> dict:
@@ -375,8 +370,17 @@ def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, cu
         resistance_levels.extend([float(closes[i]) for i in close_peaks])
         support_levels.extend([float(closes[i]) for i in close_valleys])
         
+        # NEW: Add VWAP as a significant level
+        if 'VWAP' in data.columns:
+            vwap = data['VWAP'].iloc[-1]
+            if not pd.isna(vwap):
+                # VWAP is a significant level - add it to both support and resistance
+                # since it can act as both depending on price position
+                support_levels.append(vwap)
+                resistance_levels.append(vwap)
+        
         # Remove duplicates and filter out levels too close to current price
-        min_distance = current_price * 0.001  # Minimum 0.1% distance
+        min_distance = current_price * 0.001
         resistance_levels = [level for level in set(resistance_levels) if abs(level - current_price) > min_distance]
         support_levels = [level for level in set(support_levels) if abs(level - current_price) > min_distance]
         
@@ -392,9 +396,13 @@ def calculate_support_resistance_enhanced(data: pd.DataFrame, timeframe: str, cu
         final_resistance = [level['price'] for level in clustered_resistance]
         final_support = [level['price'] for level in clustered_support]
         
+        # Store VWAP separately
+        vwap_value = data['VWAP'].iloc[-1] if 'VWAP' in data.columns else np.nan
+        
         return {
             'support': final_support,
             'resistance': final_resistance,
+            'vwap': vwap_value,
             'sensitivity': dynamic_sensitivity,
             'timeframe': timeframe,
             'data_points': len(data),
@@ -466,6 +474,14 @@ def get_multi_timeframe_data_enhanced(ticker: str) -> Tuple[dict, float]:
                             
                             if len(df) >= 20:  # Minimum data points for reliable S/R
                                 df = df[required_cols]
+                                
+                                # Calculate VWAP for this timeframe
+                                if 'High' in df.columns and 'Low' in df.columns and 'Close' in df.columns and 'Volume' in df.columns:
+                                    typical_price = (df['High'] + df['Low'] + df['Close']) / 3
+                                    cumulative_tp = (typical_price * df['Volume']).cumsum()
+                                    cumulative_vol = df['Volume'].cumsum()
+                                    df['VWAP'] = cumulative_tp / cumulative_vol
+                                
                                 data[tf] = df
                                 
                                 # Get current price from most recent data
@@ -624,6 +640,28 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
             )
         )
         
+        # NEW: Add VWAP line if available
+        vwap_found = False
+        vwap_value = None
+        for tf, sr in data.items():
+            if 'vwap' in sr and not pd.isna(sr['vwap']):
+                vwap_value = sr['vwap']
+                fig.add_hline(
+                    y=vwap_value, 
+                    line_dash="dot", 
+                    line_color="cyan",
+                    line_width=3,
+                    annotation_text=f"VWAP: ${vwap_value:.2f}",
+                    annotation_position="bottom right",
+                    annotation=dict(
+                        font=dict(size=12, color="cyan"),
+                        bgcolor="rgba(0,255,255,0.1)",
+                        bordercolor="cyan"
+                    )
+                )
+                vwap_found = True
+                break
+        
         # Color scheme for timeframes
         timeframe_colors = {
             '1min': 'rgba(255,0,0,0.8)',    # Red
@@ -740,6 +778,17 @@ def plot_sr_levels_enhanced(data: dict, current_price: float) -> go.Figure:
                 ]
             )
         )
+        
+        # NEW: Add VWAP explanation if found
+        if vwap_found:
+            fig.add_annotation(
+                x=0.5, y=0.95,
+                xref="paper", yref="paper",
+                text="<b>VWAP (Volume Weighted Average Price) is a key dynamic level</b><br>Price above VWAP = Bullish | Price below VWAP = Bearish",
+                showarrow=False,
+                font=dict(size=12, color="cyan"),
+                bgcolor="rgba(0,0,0,0.5)"
+            )
         
         return fig
         
@@ -929,9 +978,7 @@ def get_stock_data_with_indicators(ticker: str) -> pd.DataFrame:
         data = data.reset_index(drop=False)
         
         # Compute all indicators in one go
-        data = compute_all_indicators(data)
-        
-        return data
+        return compute_all_indicators(data)  # Fixed: removed recursive call
         
     except Exception as e:
         st.error(f"Error fetching stock data: {str(e)}")
@@ -1007,7 +1054,12 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
         if len(close) >= 14:
             atr = AverageTrueRange(high=high, low=low, close=close, window=14)
             df['ATR'] = atr.average_true_range()
-            df['ATR_pct'] = df['ATR'] / close
+            # Fix: Add check for zero/negative current price
+            current_price = df['Close'].iloc[-1]
+            if current_price > 0:
+                df['ATR_pct'] = df['ATR'] / close
+            else:
+                df['ATR_pct'] = np.nan
         else:
             df['ATR'] = np.nan
             df['ATR_pct'] = np.nan
@@ -1605,6 +1657,37 @@ def generate_enhanced_signal(option: pd.Series, side: str, stock_df: pd.DataFram
             'explanation': f"Option volume {option_volume:.0f} {'✓' if volume_pass else '✗'} minimum {thresholds['volume_min']:.0f}. Higher volume = better liquidity."
         })
         
+        # NEW: VWAP condition (special weight)
+        vwap_pass = False
+        vwap_score = 0
+        if vwap is not None:
+            if side == "call":
+                vwap_pass = close > vwap
+                vwap_score = 0.15 if vwap_pass else 0  # Extra weight for VWAP
+                explanations.append({
+                    'condition': 'VWAP',
+                    'passed': vwap_pass,
+                    'value': vwap,
+                    'threshold': "Price > VWAP",
+                    'weight': 0.15,
+                    'score': vwap_score,
+                    'explanation': f"Price ${close:.2f} {'above' if close > vwap else 'below'} VWAP ${vwap:.2f} - key institutional level"
+                })
+            else:
+                vwap_pass = close < vwap
+                vwap_score = 0.15 if vwap_pass else 0
+                explanations.append({
+                    'condition': 'VWAP',
+                    'passed': vwap_pass,
+                    'value': vwap,
+                    'threshold': "Price < VWAP",
+                    'weight': 0.15,
+                    'score': vwap_score,
+                    'explanation': f"Price ${close:.2f} {'below' if close < vwap else 'above'} VWAP ${vwap:.2f} - key institutional level"
+                })
+            
+            weighted_score += vwap_score
+        
         signal = all(passed for passed, desc, val in conditions)
         
         # Calculate profit targets and other metrics
@@ -1728,6 +1811,7 @@ def calculate_scanner_score(stock_df: pd.DataFrame, side: str) -> float:
         macd_signal = float(latest['MACD_signal']) if not pd.isna(latest['MACD_signal']) else None
         keltner_upper = float(latest['KC_upper']) if not pd.isna(latest['KC_upper']) else None
         keltner_lower = float(latest['KC_lower']) if not pd.isna(latest['KC_lower']) else None
+        vwap = float(latest['VWAP']) if not pd.isna(latest['VWAP']) else None
         
         if side == "call":
             if ema_9 and ema_20 and close > ema_9 > ema_20:
@@ -1738,7 +1822,7 @@ def calculate_scanner_score(stock_df: pd.DataFrame, side: str) -> float:
                 score += 1.0
             if macd and macd_signal and macd > macd_signal:
                 score += 1.0
-            if keltner_upper and close > keltner_upper:
+            if vwap and close > vwap:
                 score += 1.0
         else:
             if ema_9 and ema_20 and close < ema_9 < ema_20:
@@ -1749,7 +1833,7 @@ def calculate_scanner_score(stock_df: pd.DataFrame, side: str) -> float:
                 score += 1.0
             if macd and macd_signal and macd < macd_signal:
                 score += 1.0
-            if keltner_lower and close < keltner_lower:
+            if vwap and close < vwap:
                 score += 1.0
         
         return (score / max_score) * 100
@@ -1795,6 +1879,15 @@ def create_stock_chart(df: pd.DataFrame, sr_levels: dict = None):
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['KC_upper'], name='KC Upper', line=dict(color='red', dash='dash')), row=1, col=1)
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['KC_middle'], name='KC Middle', line=dict(color='green')), row=1, col=1)
             fig.add_trace(go.Scatter(x=df['Datetime'], y=df['KC_lower'], name='KC Lower', line=dict(color='red', dash='dash')), row=1, col=1)
+        
+        # NEW: Add VWAP line
+        if 'VWAP' in df.columns and not df['VWAP'].isna().all():
+            fig.add_trace(go.Scatter(
+                x=df['Datetime'], 
+                y=df['VWAP'], 
+                name='VWAP', 
+                line=dict(color='cyan', width=2)
+            ), row=1, col=1)
         
         # Volume
         fig.add_trace(
@@ -2581,6 +2674,17 @@ if ticker:
             st.subheader("📝 Trading Strategy Guidance")
             with st.expander("How to use support/resistance for options trading", expanded=True):
                 st.markdown("""
+                **VWAP Trading Strategies:**
+                - **Bullish Signal**: When price crosses above VWAP with volume confirmation
+                - **Bearish Signal**: When price rejects at VWAP with decreasing volume
+                - **VWAP Bounce**: Buy calls when price pulls back to VWAP in an uptrend
+                - **VWAP Rejection**: Buy puts when price fails to break above VWAP in a downtrend
+                
+                **Combine VWAP with Support/Resistance:**
+                1. **VWAP + Support**: Strong buy zone when price approaches both
+                2. **VWAP + Resistance**: Strong sell zone when price approaches both
+                3. **VWAP Breakout**: Powerful signal when price breaks through VWAP and key resistance
+                
                 **Scalping Strategies (1min/5min levels):**
                 - Use for quick, short-term trades (minutes to hours)
                 - Look for options with strikes near key levels for breakout plays
@@ -2592,12 +2696,6 @@ if ticker:
                 - Look for options with strikes between support/resistance levels for range-bound strategies
                 - Combine with technical indicators for confirmation
                 - Ideal for weekly expiration options
-                
-                **General Tips:**
-                1. **Breakout Trading**: Buy calls when price breaks above resistance, puts when below support
-                2. **Bounce Trading**: Buy calls near support, puts near resistance
-                3. **Range Trading**: Sell options when price is between support/resistance
-                4. **Straddles/Strangles**: Use when expecting volatility breakout
                 """)
     
     with tab4:
@@ -2614,7 +2712,7 @@ if ticker:
             for condition, weight in call_weights.items():
                 st.write(f"• {condition.title()}: {weight:.1%}")
             
-            st.markdown("**🎯 Profit Targets**")
+            st.markdown("🎯 Profit Targets**")
             st.write(f"• Call Target: {CONFIG['PROFIT_TARGETS']['call']:.1%}")
             st.write(f"• Put Target: {CONFIG['PROFIT_TARGETS']['put']:.1%}")
             st.write(f"• Stop Loss: {CONFIG['PROFIT_TARGETS']['stop_loss']:.1%}")
@@ -2647,6 +2745,7 @@ if ticker:
             4. **Trend**: Price > EMA9 > EMA20 (bullish alignment)
             5. **Momentum**: RSI > 50 (bullish momentum)
             6. **Volume** > minimum (sufficient liquidity)
+            7. **VWAP**: Price > VWAP (bullish institutional level)
             
             **📉 Put Signal Conditions:**
             1. **Delta** ≤ threshold (negative price sensitivity)
@@ -2655,6 +2754,7 @@ if ticker:
             4. **Trend**: Price < EMA9 < EMA20 (bearish alignment)
             5. **Momentum**: RSI < 50 (bearish momentum)
             6. **Volume** > minimum (sufficient liquidity)
+            7. **VWAP**: Price < VWAP (bearish institutional level)
             """)
         
         with st.expander("🎯 Dynamic Threshold Adjustments", expanded=False):
@@ -2939,6 +3039,7 @@ else:
         
         **🎯 New Features:**
         - **Multi-Timeframe Support/Resistance**: 1min/5min for scalping, 15min/30min/1h for intraday
+        - **VWAP Integration**: Volume Weighted Average Price analysis for institutional levels
         - **Free Tier API Integration**: Alpha Vantage, FMP, IEX Cloud
         - **Usage Dashboard**: Track API consumption across services
         - **Professional UX**: Color-coded metrics, tooltips, and guidance
@@ -2948,12 +3049,6 @@ else:
         - **Polygon Integration**: Premium data with higher rate limits
         - **Fallback Logic**: Yahoo Finance backup when needed
         - **Usage Analytics**: Track refresh patterns and optimize costs
-        
-        **🔧 Fixed Support/Resistance:**
-        - **Proper Level Alignment**: Support below price, resistance above
-        - **Dynamic Sensitivity**: Adjusts to volatility automatically
-        - **Enhanced Peak Detection**: Uses scipy when available
-        - **Strength-Based Clustering**: More relevant levels prioritized
         """)
     
     with st.expander("📚 Quick Start Guide", expanded=False):
