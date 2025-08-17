@@ -1,5 +1,13 @@
-# app.py
 import streamlit as st
+
+st.set_page_config(
+    page_title="YS Analytics",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items=None  # Hides default navigation
+)
+
 # GitHub raw URL for your logo
 LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 # Page header
@@ -124,6 +132,6 @@ with st.sidebar:
         st.page_link("pages/4_Insights.py", label="Insights", icon="💡")
         st.page_link("pages/5_Contact.py", label="Contact", icon="✉️")
     with st.expander("Tools & Demos", expanded=False):
-        st.page_link("pages/6_Options_Analyzer.py", label="Options Analyzer", icon="📊")
-        st.page_link("pages/7_Sector_Classifier.py", label="Sector Classifier", icon="🤖")
-        st.page_link("pages/8_Macro_Dashboard.py", label="Macro Dashboard", icon="🌍")
+        st.page_link("pages/Options_Analyzer.py", label="Options Analyzer", icon="📊")  # Updated to new name
+        st.page_link("pages/Sector_Classifier.py", label="Sector Classifier", icon="🤖")  # Updated to new name
+        st.page_link("pages/Macro_Dashboard.py", label="Macro Dashboard", icon="🌍")  # Updated to new name
