@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import load_global_css, render_sidebar_navigation, render_project_search
+from utils import load_global_css, render_project_search
 
 # Analytics init
 if "analytics_initialized" not in st.session_state:
@@ -31,8 +31,8 @@ st.markdown("""
         height: 100%;
         transition: all 0.3s ease;
         margin-bottom: 25px;
-        position: relative; /* Added for button positioning */
-        min-height: 520px; /* Ensures consistent card height */
+        position: relative;
+        min-height: 520px;
     }
     
     .project-card:hover {
@@ -161,17 +161,62 @@ st.markdown("""
     
     /* Button container - fixed to bottom */
     .button-container {
-        position: absolute; /* Changed to absolute positioning */
-        bottom: 20px; /* Positions at bottom of card */
-        left: 20px; /* Aligns with card padding */
-        right: 20px; /* Aligns with card padding */
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
         padding-top: 10px;
+    }
+    
+    /* Sidebar styling */
+    .sidebar-title {
+        color: #00C2FF !important;
+        font-size: 1.5rem !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 25px;
+    }
+    
+    .sidebar-link {
+        display: flex !important;
+        align-items: center !important;
+        padding: 10px 15px !important;
+        border-radius: 8px !important;
+        margin-bottom: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .sidebar-link:hover {
+        background: rgba(0, 194, 255, 0.15) !important;
+        transform: translateX(5px);
+    }
+    
+    .sidebar-icon {
+        margin-right: 10px;
+        font-size: 1.2rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Render sidebar
-render_sidebar_navigation()
+# Create sidebar navigation only on this main page
+with st.sidebar:
+    st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+    st.markdown('**Main Pages**')
+    st.page_link("app.py", label="Home", icon="🏠", use_container_width=True)
+    st.page_link("pages/2_Projects.py", label="Projects", icon="📚", use_container_width=True)
+    st.page_link("pages/3_Dashboard.py", label="Dashboard", icon="📈", use_container_width=True)
+    st.page_link("pages/4_Insights.py", label="Insights", icon="💡", use_container_width=True)
+    st.page_link("pages/5_Contact.py", label="Contact", icon="✉️", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+    st.markdown('**Tools & Demos**')
+    # Add your tool/demo links here
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Create main content container
 st.markdown('<div class="content-container">', unsafe_allow_html=True)
