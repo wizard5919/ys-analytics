@@ -32,7 +32,7 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("""
-    **Email:** contact@ysanalytics.com  
+    **Email:** ysanalyticsllc@gmail.com 
     **Phone:** +1 (404) 561-9812  
     **Location:** ATLANTA, GA
     """)
@@ -50,3 +50,4 @@ st.map(pd.DataFrame({'lat': [33.7537], 'lon': [-84.3863]}), zoom=12)
 
 st.markdown("---")
 st.page_link("pages/1_Home.py", label="← Back to Home", icon="🏠")
+
