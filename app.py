@@ -26,9 +26,9 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         background: #0E1117;
         border: 1px solid #1e3a5f;
-        height: 100%;
         display: flex;
         flex-direction: column;
+        height: 100%;
         transition: all 0.3s ease;
         margin-bottom: 25px;
     }
@@ -44,10 +44,11 @@ st.markdown("""
         font-size: 1.3rem;
         font-weight: 700;
         color: #00C2FF;
-        margin-top: 0;
-        margin-bottom: 15px;
-        min-height: 60px;
+        margin: 0 0 12px 0;
         line-height: 1.4;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
     }
     
     /* Better tag styling */
@@ -60,6 +61,7 @@ st.markdown("""
         font-size: 0.85rem;
         display: inline-block;
         margin: 0 5px 8px 0;
+        white-space: nowrap;
     }
     
     /* Button styling */
@@ -69,9 +71,10 @@ st.markdown("""
         border: none !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        margin-top: auto;
+        margin-top: 15px;
         padding: 10px 20px !important;
         transition: all 0.3s ease !important;
+        width: 100%;
     }
     
     .project-button:hover {
@@ -84,7 +87,7 @@ st.markdown("""
         color: #a0aec0;
         font-size: 0.95rem;
         line-height: 1.5;
-        margin: 15px 0;
+        margin: 0 0 15px 0;
         min-height: 70px;
     }
     
@@ -125,21 +128,16 @@ st.markdown("""
     
     /* Tag container */
     .tag-container {
-        margin: 15px 0;
+        margin: 0 0 15px 0;
         min-height: 40px;
-    }
-    
-    /* CTA button styling */
-    .cta-button {
-        width: 100%;
-        margin: 10px 0;
-        text-align: center;
-        font-weight: 600 !important;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
     }
     
     /* Logo sizing */
     .logo-container {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     /* Search bar styling */
@@ -157,6 +155,12 @@ st.markdown("""
     /* Column spacing */
     .stColumn > div {
         padding: 0 10px;
+    }
+    
+    /* Button container */
+    .button-container {
+        margin-top: auto;
+        padding-top: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -182,7 +186,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 st.markdown("""
 <div class="card">
     <h2 style="color: #00C2FF; border-bottom: 2px solid #00C2FF; padding-bottom: 12px; margin-top: 0;">Precision Analytics for Financial Markets</h2>
-    <p style="font-size: 1.05rem;">We transform complex market data into actionable intelligence through:</p>
+    <p style="font-size: 1.05rem; margin-bottom: 15px;">We transform complex market data into actionable intelligence through:</p>
     <ul style="font-size: 1.05rem; line-height: 1.8; margin-bottom: 0;">
         <li><strong>Quantitative Research</strong> • Algorithmic market analysis</li>
         <li><strong>Predictive Modeling</strong> • Machine learning-driven forecasts</li>
@@ -234,12 +238,13 @@ for i, proj in enumerate(filtered_projects):
         st.markdown(" ".join([f'<span class="tech-tag">{tag}</span>' for tag in proj["tags"]]), unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # View project button
-        if st.button("🔍 View Project", key=f"p{i}", use_container_width=True, 
-                    help=f"Explore the {proj['title']} project", 
-                    type="primary", 
-                    kwargs={"class": "project-button"}):
+        # View project button container (pushed to bottom)
+        st.markdown('<div class="button-container">', unsafe_allow_html=True)
+        if st.button("🔍 View Project", key=f"p{i}", 
+                    use_container_width=True, 
+                    help=f"Explore the {proj['title']} project"):
             st.switch_page(proj["link"])
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
