@@ -1,7 +1,7 @@
 import streamlit as st
-from utils import load_global_css, render_sidebar_navigation, render_project_search  # FIXED: Added render_project_search
+from utils import load_global_css, render_sidebar_navigation, render_project_search
 
-# Analytics init (unchanged)
+# Analytics init
 if "analytics_initialized" not in st.session_state:
     st.session_state.analytics_initialized = True
     st.markdown("""<!-- Google Tag Manager and Analytics code -->""", unsafe_allow_html=True)
@@ -20,7 +20,7 @@ load_global_css()
 render_sidebar_navigation()
 
 # Header with consistent logo
-LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"  # Ensure high-res
+LOGO_URL = "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/logo.png"
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image(LOGO_URL, width=150)
@@ -47,19 +47,19 @@ st.header("Featured Analytics Projects")
 st.markdown("***Select case studies demonstrating our financial analytics capabilities***")
 
 projects = [
-    {"title": "📈 Options Analytics Suite", "desc": "Real-time Greeks calculation and volatility surface visualization", "tags": ["Python", "Streamlit", "QuantLib"], "preview_url": "https://via.placeholder.com/300x200?text=Options+Chart", "link": "pages/2_Projects.py"},
-    {"title": "🤖 Market Sector Classifier", "desc": "ML-driven sector analysis using price movement patterns", "tags": ["Scikit-learn", "TA-Lib", "Plotly"], "preview_url": "https://via.placeholder.com/300x200?text=ML+Model", "link": "pages/2_Projects.py"},
-    {"title": "🌍 Macroeconomic Dashboard", "desc": "Global economic indicators with forecasting capabilities", "tags": ["FRED API", "Prophet", "Altair"], "preview_url": "https://via.placeholder.com/300x200?text=Macro+Dashboard", "link": "pages/2_Projects.py"}
+    {"title": "📈 Options Analytics Suite", "desc": "Real-time Greeks calculation and volatility surface visualization", "tags": ["Python", "Streamlit", "QuantLib"], "preview_url": "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/options-preview.png", "link": "pages/2_Projects.py"},
+    {"title": "🤖 Market Sector Classifier", "desc": "ML-driven sector analysis using price movement patterns", "tags": ["Scikit-learn", "TA-Lib", "Plotly"], "preview_url": "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/sector-preview.png", "link": "pages/2_Projects.py"},
+    {"title": "🌍 Macroeconomic Dashboard", "desc": "Global economic indicators with forecasting capabilities", "tags": ["FRED API", "Prophet", "Altair"], "preview_url": "https://raw.githubusercontent.com/wizard5919/ys-analytics/main/assets/macro-preview.png", "link": "pages/2_Projects.py"}
 ]
 
-filtered_projects = render_project_search(projects)  # This line (55) now works with the import
+filtered_projects = render_project_search(projects)
 
 cols = st.columns(3)
 for i, proj in enumerate(filtered_projects):
     with cols[i % 3]:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader(proj["title"])
-        st.image(proj["preview_url"], use_column_width=True)  # Added preview
+        st.image(proj["preview_url"], use_container_width=True)  # FIXED: Replaced deprecated parameter
         st.markdown(proj["desc"])
         st.markdown(" ".join([f'<span class="tech-tag">{tag}</span>' for tag in proj["tags"]]), unsafe_allow_html=True)
         if st.button("🔍 View Project", key=f"p{i}", use_container_width=True):
@@ -82,6 +82,6 @@ footer_cols = st.columns(3)
 with footer_cols[0]:
     st.markdown("**© 2025 YS Analytics**")
 with footer_cols[1]:
-    st.markdown("[<i class='fab fa-github'></i> GitHub](https://github.com/wizard5919) • [<i class='fab fa-linkedin'></i> LinkedIn](https://linkedin.com)")
+    st.markdown("[<i class='fab fa-github'></i> GitHub](https://github.com/wizard5919) • [<i class='fab fa-linkedin'></i> LinkedIn](https://linkedin.com)", unsafe_allow_html=True)
 with footer_cols[2]:
     st.markdown("**Data Sources:** FRED • Yahoo Finance • OANDA")
