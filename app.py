@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import load_global_css, render_sidebar_navigation
+from utils import load_global_css, render_sidebar_navigation, render_project_search  # FIXED: Added render_project_search
 
 # Analytics init (unchanged)
 if "analytics_initialized" not in st.session_state:
@@ -52,7 +52,7 @@ projects = [
     {"title": "🌍 Macroeconomic Dashboard", "desc": "Global economic indicators with forecasting capabilities", "tags": ["FRED API", "Prophet", "Altair"], "preview_url": "https://via.placeholder.com/300x200?text=Macro+Dashboard", "link": "pages/2_Projects.py"}
 ]
 
-filtered_projects = render_project_search(projects)
+filtered_projects = render_project_search(projects)  # This line (55) now works with the import
 
 cols = st.columns(3)
 for i, proj in enumerate(filtered_projects):
