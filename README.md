@@ -1,7 +1,7 @@
 
 # 🚀 YS Analytics - Financial Analytics Platform
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ys-analytics.streamlit.app/)
+[![Streamlit App](https://ys-analytics-4yaygtnc8ae6ryootpxhxs.streamlit.app/)
 
 > Professional boutique analytics firm specializing in financial market intelligence
 
