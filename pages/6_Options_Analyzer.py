@@ -3368,65 +3368,98 @@ with st.expander("Technical Analysis Summary"):
             st.info("News data is temporarily unavailable. Please try again later or check your API keys.")
 
         # ─────────────────────────────────────────────────────────
-        # 📅 US Economic Calendar (unchanged)
-        # ─────────────────────────────────────────────────────────
-        st.subheader("📅 US Economic Calendar (Upcoming)")
-        if CONFIG.get('FMP_API_KEY'):
-            try:
-                start_date = datetime.date.today()
-                end_date = start_date + datetime.timedelta(days=7)
-                url = (
-                    "https://financialmodelingprep.com/api/v3/economic_calendar"
-                    f"?from={start_date.isoformat()}&to={end_date.isoformat()}&apikey={CONFIG['FMP_API_KEY']}"
-                )
-                response = requests.get(url, timeout=10)
-                response.raise_for_status()
-                data = response.json()
+# 📅 US Economic Calendar (with Daily Summary)
+# ─────────────────────────────────────────────────────────
+st.subheader("📅 US Economic Calendar (Upcoming)")
+if CONFIG.get('FMP_API_KEY'):
+    try:
+        start_date = datetime.date.today()
+        end_date = start_date + datetime.timedelta(days=7)
+        url = (
+            "https://financialmodelingprep.com/api/v3/economic_calendar"
+            f"?from={start_date.isoformat()}&to={end_date.isoformat()}&apikey={CONFIG['FMP_API_KEY']}"
+        )
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
 
-                if data:
-                    us_events = [e for e in data if e.get('country') == 'US']
-                    us_events.sort(key=lambda x: x.get('date', ''))
+        if data:
+            us_events = [e for e in data if e.get('country') == 'US']
+            us_events.sort(key=lambda x: x.get('date', ''))
 
-                    if us_events:
-                        calendar_df = pd.DataFrame(us_events)[['date', 'event', 'actual', 'previous', 'change', 'estimate', 'impact']]
-                        calendar_df = calendar_df.rename(columns={
-                            'date': 'Date (UTC)',
-                            'event': 'Event',
-                            'actual': 'Actual',
-                            'previous': 'Previous',
-                            'change': 'Change',
-                            'estimate': 'Estimate',
-                            'impact': 'Impact'
-                        })
-                        calendar_df['Date (UTC)'] = pd.to_datetime(calendar_df['Date (UTC)']).dt.strftime('%Y-%m-%d %H:%M')
+            if us_events:
+                calendar_df = pd.DataFrame(us_events)[['date', 'event', 'actual', 'previous', 'change', 'estimate', 'impact']]
+                calendar_df = calendar_df.rename(columns={
+                    'date': 'Date (UTC)',
+                    'event': 'Event',
+                    'actual': 'Actual',
+                    'previous': 'Previous',
+                    'change': 'Change',
+                    'estimate': 'Estimate',
+                    'impact': 'Impact'
+                })
+                calendar_df['Date (UTC)'] = pd.to_datetime(calendar_df['Date (UTC)']).dt.strftime('%Y-%m-%d %H:%M')
 
-                        current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M')
-                        upcoming_events = calendar_df[calendar_df['Date (UTC)'] > current_time]
+                current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+                upcoming_events = calendar_df[calendar_df['Date (UTC)'] > current_time]
 
-                        if not upcoming_events.empty:
-                            def style_impact(val):
-                                color = 'red' if val == 'High' else 'orange' if val == 'Medium' else 'green' if val == 'Low' else 'gray'
-                                return f'color: {color}; font-weight: bold;'
+                if not upcoming_events.empty:
+                    def style_impact(val):
+                        color = 'red' if val == 'High' else 'orange' if val == 'Medium' else 'green' if val == 'Low' else 'gray'
+                        return f'color: {color}; font-weight: bold;'
 
-                            today_str = datetime.datetime.utcnow().strftime('%Y-%m-%d')
-                            def highlight_today(row):
-                                if row['Date (UTC)'].startswith(today_str):
-                                    return ['background-color: #2a2e39'] * len(row)
-                                return [''] * len(row)
+                    today_str = datetime.datetime.utcnow().strftime('%Y-%m-%d')
+                    def highlight_today(row):
+                        if row['Date (UTC)'].startswith(today_str):
+                            return ['background-color: #2a2e39'] * len(row)
+                        return [''] * len(row)
 
-                            styled_df = upcoming_events.style.apply(highlight_today, axis=1).applymap(style_impact, subset=['Impact'])
-                            st.dataframe(styled_df, height=300)
-                            st.caption(f"✅ {len(upcoming_events)} upcoming US events. Source: Financial Modeling Prep API.")
-                        else:
-                            st.info("ℹ️ No upcoming US economic events in the next 7 days.")
-                    else:
-                        st.info("ℹ️ No US economic events scheduled for the next 7 days.")
+                    styled_df = upcoming_events.style.apply(highlight_today, axis=1).applymap(style_impact, subset=['Impact'])
+                    st.dataframe(styled_df, height=300)
+                    st.caption(f"✅ {len(upcoming_events)} upcoming US events. Source: Financial Modeling Prep API.")
+
+                    # ─────────────────────────────────────────────────────────
+                    # 📊 Daily Economic Indicators Summary
+                    # ─────────────────────────────────────────────────────────
+                    st.subheader("📊 Daily Economic Indicators Summary")
+                    grouped = upcoming_events.groupby(upcoming_events['Date (UTC)'].str[:10])
+
+                    for day, events in grouped:
+                        st.markdown(f"### {day}")
+                        for _, ev in events.iterrows():
+                            actual = ev['Actual'] if pd.notna(ev['Actual']) else "N/A"
+                            estimate = ev['Estimate'] if pd.notna(ev['Estimate']) else "N/A"
+                            impact = ev['Impact'] if pd.notna(ev['Impact']) else "N/A"
+
+                            # Compare actual vs estimate if numeric
+                            trend = ""
+                            if actual != "N/A" and estimate != "N/A":
+                                try:
+                                    actual_val = float(str(actual).replace("%", "").replace(",", ""))
+                                    est_val = float(str(estimate).replace("%", "").replace(",", ""))
+                                    if actual_val > est_val:
+                                        trend = "✅ Better than forecast"
+                                    elif actual_val < est_val:
+                                        trend = "❌ Worse than forecast"
+                                    else:
+                                        trend = "➖ In line with forecast"
+                                except Exception:
+                                    pass
+
+                            st.write(f"- **{ev['Event']}**: {actual} (vs. {estimate} est.) | Impact: {impact} {trend}")
+                        st.divider()
+
                 else:
-                    st.info("ℹ️ No economic events data available.")
-            except Exception as e:
-                st.warning(f"⚠️ Error fetching economic calendar: {str(e)}. Check FMP API key or rate limits.")
+                    st.info("ℹ️ No upcoming US economic events in the next 7 days.")
+            else:
+                st.info("ℹ️ No US economic events scheduled for the next 7 days.")
         else:
-            st.warning("⚠️ Add your Financial Modeling Prep (FMP) API key in the sidebar to enable the economic calendar. Get a free key at https://site.financialmodelingprep.com/developer.")
+            st.info("ℹ️ No economic events data available.")
+    except Exception as e:
+        st.warning(f"⚠️ Error fetching economic calendar: {str(e)}. Check FMP API key or rate limits.")
+else:
+    st.warning("⚠️ Add your Financial Modeling Prep (FMP) API key in the sidebar to enable the economic calendar. Get a free key at https://site.financialmodelingprep.com/developer.")
+
 
 with tab4: # Financials tab
     st.header("💼 Financial Analysis")
