@@ -3188,6 +3188,46 @@ with tab3: # News & Analysis tab
             - Track sector rotation patterns
             - Follow Fed policy announcements
             """)
+            # NEW: US Economic Calendar section
+        st.subheader("📅 US Economic Calendar (Today)")
+        if CONFIG['FMP_API_KEY']:
+            try:
+                today = datetime.date.today().isoformat()
+                url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={today}&to={today}&apikey={CONFIG['FMP_API_KEY']}"
+                response = requests.get(url, timeout=5)
+                response.raise_for_status()
+                data = response.json()
+                
+                if data:
+                    # Filter for US events only
+                    us_events = [event for event in data if event.get('country') == 'US']
+                    
+                    if us_events:
+                        # Create DataFrame for display
+                        calendar_df = pd.DataFrame(us_events)[['date', 'event', 'actual', 'previous', 'change', 'estimate', 'impact']]
+                        calendar_df = calendar_df.rename(columns={
+                            'date': 'Time (UTC)',
+                            'event': 'Event',
+                            'actual': 'Actual',
+                            'previous': 'Previous',
+                            'change': 'Change',
+                            'estimate': 'Estimate',
+                            'impact': 'Impact'
+                        })
+                        # Style impact: High=Red, Medium=Orange, Low=Green
+                        def style_impact(val):
+                            color = 'red' if val == 'High' else 'orange' if val == 'Medium' else 'green' if val == 'Low' else 'gray'
+                            return f'color: {color}'
+                        st.dataframe(calendar_df.style.applymap(style_impact, subset=['Impact']))
+                        st.caption(f"✅ {len(us_events)} US events today. Source: Financial Modeling Prep API.")
+                    else:
+                        st.info("ℹ️ No US economic events scheduled for today.")
+                else:
+                    st.info("ℹ️ No economic events data available for today.")
+            except Exception as e:
+                st.warning(f"⚠️ Error fetching economic calendar: {str(e)}. Check FMP API key or rate limits.")
+        else:
+            st.warning("⚠️ Add your Financial Modeling Prep (FMP) API key in the sidebar to enable the economic calendar. Get a free key at https://site.financialmodelingprep.com/developer.")
 with tab4: # Financials tab
     st.header("💼 Financial Analysis")
     if ticker:
