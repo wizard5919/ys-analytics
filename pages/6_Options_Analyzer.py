@@ -3158,29 +3158,128 @@ with tab3: # News & Analysis tab
         except Exception as e:
             st.error(f"Error fetching news: {str(e)}")
  
-        # Market analysis
+        # ─────────────────────────────────────────────────────────
+# Config & safe defaults
+# ─────────────────────────────────────────────────────────
+if "CONFIG" not in globals():
+    CONFIG = {}
+CONFIG.setdefault("BENZINGA_API_KEY", st.secrets.get("BENZINGA_API_KEY", "bz.4THPU3EEFN2ITIQUQ6O5X3FP3T555O35"))
+CONFIG.setdefault("ALPHA_VANTAGE_API_KEY", st.secrets.get("ALPHA_VANTAGE_API_KEY", ""))
+CONFIG.setdefault("FMP_API_KEY", st.secrets.get("FMP_API_KEY", ""))
+
+# Ensure S/R structure exists to avoid KeyErrors
+st.session_state.setdefault("sr_data", {})
+st.session_state.sr_data.setdefault("5min", {"support": [], "resistance": []})
+
+# Local timezone (user is in Morocco)
+LOCAL_TZ = pytz.timezone("Africa/Casablanca")
+
+# ─────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_benzinga_news(symbol: str, token: str, limit: int = 5):
+    """
+    Calls Benzinga News v2.
+    Returns a list of normalized dicts: {title, source, time, summary, url}
+    Handles slight schema variations.
+    """
+    if not token:
+        return []
+
+    # Common Benzinga endpoint & params
+    url = "https://api.benzinga.com/api/v2/news"
+    params = {
+        "token": token,
+        "symbols": symbol,
+        "size": max(1, min(limit, 20)),
+        # You can add filters like "channels=general" or "display_output=full"
+    }
+    try:
+        r = requests.get(url, params=params, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+    except Exception:
+        return []
+
+    # Benzinga may return a dict with "articles" or a list directly
+    articles = data.get("articles") if isinstance(data, dict) else data
+    if not isinstance(articles, list):
+        return []
+
+    normalized = []
+    for a in articles[:limit]:
+        title = a.get("title") or "No title"
+        # time fields may be "created", "created_at", "pubDate"
+        t_raw = a.get("created") or a.get("created_at") or a.get("pubDate") or ""
+        # summary fields might be "teaser", "description", "body"
+        summary = a.get("teaser") or a.get("description") or a.get("body") or ""
+        url_link = a.get("url") or a.get("link") or ""
+        source = a.get("author") or a.get("source") or "Benzinga"
+
+        normalized.append({
+            "title": title,
+            "source": source,
+            "time": t_raw,
+            "summary": summary,
+            "url": url_link
+        })
+    return normalized
+
+def to_local_timestr(dt_like) -> str:
+    """
+    Best-effort conversion of timestamps (unix or iso) to LOCAL_TZ string.
+    """
+    # Try unix seconds
+    try:
+        if isinstance(dt_like, (int, float)) or (isinstance(dt_like, str) and dt_like.isdigit()):
+            ts = int(float(dt_like))
+            return datetime.datetime.fromtimestamp(ts, pytz.UTC).astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        pass
+
+    # Try ISO-8601
+    try:
+        # handle trailing Z
+        s = str(dt_like).replace("Z", "+00:00")
+        dt = datetime.datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = pytz.UTC.localize(dt)
+        return dt.astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return "Unknown time"
+
+# ─────────────────────────────────────────────────────────
+# Market analysis (DROP-IN)
+# ─────────────────────────────────────────────────────────
 st.subheader("Market Analysis")
 with st.expander("Technical Analysis Summary"):
-    if 'df' in locals():
-        latest = df.iloc[-1] if not df.empty else None
+    if 'df' in globals() or 'df' in locals():
+        latest = df.iloc[-1] if ('df' in globals() or 'df' in locals()) and not df.empty else None
         if latest is not None:
             col1, col2, col3 = st.columns(3)
-         
+
             with col1:
-                st.metric("RSI", f"{latest.get('RSI', 'N/A'):.1f}" if not pd.isna(latest.get('RSI')) else "N/A")
-                st.metric("MACD", f"{latest.get('MACD', 'N/A'):.3f}" if not pd.isna(latest.get('MACD')) else "N/A")
-         
+                st.metric("RSI", f"{latest.get('RSI', float('nan')):.1f}" if not pd.isna(latest.get('RSI', float('nan'))) else "N/A")
+                st.metric("MACD", f"{latest.get('MACD', float('nan')):.3f}" if not pd.isna(latest.get('MACD', float('nan'))) else "N/A")
+
             with col2:
-                st.metric("Trend",
-                         "Bullish" if latest['Close'] > latest.get('EMA_20', 0) else "Bearish" if latest['Close'] < latest.get('EMA_20', 0) else "Neutral")
-                st.metric("Volume vs Avg",
-                         f"{(latest['Volume'] / latest.get('avg_vol', 1)):.1f}x" if not pd.isna(latest.get('avg_vol')) else "N/A")
-         
+                st.metric(
+                    "Trend",
+                    "Bullish" if latest['Close'] > latest.get('EMA_20', 0)
+                    else "Bearish" if latest['Close'] < latest.get('EMA_20', 0)
+                    else "Neutral"
+                )
+                st.metric(
+                    "Volume vs Avg",
+                    f"{(latest['Volume'] / max(1, latest.get('avg_vol', 1))):.1f}x" if not pd.isna(latest.get('avg_vol', float('nan'))) else "N/A"
+                )
+
             with col3:
                 st.metric("Support Levels", len(st.session_state.sr_data.get('5min', {}).get('support', [])))
                 st.metric("Resistance Levels", len(st.session_state.sr_data.get('5min', {}).get('resistance', [])))
- 
-        # Add market commentary
+
+        # Market commentary
         st.info("""
         **Market Context:**
         - Monitor VIX for volatility signals
@@ -3188,30 +3287,110 @@ with st.expander("Technical Analysis Summary"):
         - Track sector rotation patterns
         - Follow Fed policy announcements
         """)
-        
-        # NEW: US Economic Calendar section - Show upcoming events
-        st.subheader("📅 US Economic Calendar (Upcoming)")
-        if CONFIG['FMP_API_KEY']:
+
+        # ─────────────────────────────────────────────────────────
+        # 📰 Market News & Analysis (Benzinga → Alpha Vantage → Yahoo)
+        # ─────────────────────────────────────────────────────────
+        st.subheader("📰 Market News & Analysis")
+        news_fetched = False
+
+        # Option 1: Benzinga (primary)
+        if not news_fetched:
             try:
-                # Show events for the next 7 days
-                start_date = datetime.date.today()
-                end_date = start_date + datetime.timedelta(days=7)
-                
-                url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start_date.isoformat()}&to={end_date.isoformat()}&apikey={CONFIG['FMP_API_KEY']}"
-                response = requests.get(url, timeout=5)
+                bz_items = fetch_benzinga_news(ticker, CONFIG.get("BENZINGA_API_KEY", ""), limit=5)
+                if bz_items:
+                    st.subheader(f"Latest News for {ticker} (Benzinga)")
+                    for item in bz_items:
+                        with st.container():
+                            st.markdown(f"### {item['title']}")
+                            st.caption(f"Source: {item['source']} | {to_local_timestr(item['time'])}")
+                            if item['summary']:
+                                st.write(item['summary'])
+                            if item['url']:
+                                st.markdown(f"[Read more]({item['url']})")
+                            st.divider()
+                    news_fetched = True
+            except Exception as e:
+                st.warning(f"⚠️ Benzinga news error: {e}")
+
+        # Option 2: Alpha Vantage (fallback)
+        if CONFIG.get('ALPHA_VANTAGE_API_KEY') and not news_fetched:
+            try:
+                url = (
+                    "https://www.alphavantage.co/query"
+                    f"?function=NEWS_SENTIMENT&tickers={ticker}"
+                    f"&apikey={CONFIG['ALPHA_VANTAGE_API_KEY']}&limit=5"
+                )
+                response = requests.get(url, timeout=10)
                 response.raise_for_status()
                 data = response.json()
-                
+
+                if 'feed' in data and data['feed']:
+                    st.subheader(f"Latest News for {ticker} (Alpha Vantage)")
+                    for item in data['feed'][:5]:
+                        with st.container():
+                            st.markdown(f"### {item.get('title', 'No title')}")
+                            st.caption(f"Source: {item.get('source', 'Unknown')} | {to_local_timestr(item.get('time_published', ''))}")
+                            if item.get('summary'):
+                                st.write(item.get('summary', ''))
+                            if 'url' in item:
+                                st.markdown(f"[Read more]({item['url']})")
+                            st.divider()
+                    news_fetched = True
+            except Exception as e:
+                st.warning(f"⚠️ Alpha Vantage news error: {e}")
+
+        # Option 3: Yahoo Finance (fallback)
+        if not news_fetched:
+            try:
+                stock = yf.Ticker(ticker)
+                news = stock.news
+                if news:
+                    st.subheader(f"Latest News for {ticker} (Yahoo Finance)")
+                    for item in news[:5]:
+                        title = item.get('title') or item.get('link', '').split('/')[-1].replace('-', ' ').title()
+                        publisher = item.get('publisher', 'Unknown')
+                        time_field = item.get('providerPublishTime') or item.get('publishedAt') or time.time()
+                        summary = item.get('summary', '')
+                        with st.container():
+                            st.markdown(f"### {title}")
+                            st.caption(f"Publisher: {publisher} | {to_local_timestr(time_field)}")
+                            if summary:
+                                st.write(summary)
+                            if 'link' in item:
+                                st.markdown(f"[Read more]({item['link']})")
+                            st.divider()
+                    news_fetched = True
+            except Exception as e:
+                st.warning(f"⚠️ Yahoo Finance news error: {e}")
+
+        if not news_fetched:
+            st.info("News data is temporarily unavailable. Please try again later or check your API keys.")
+
+        # ─────────────────────────────────────────────────────────
+        # 📅 US Economic Calendar (unchanged)
+        # ─────────────────────────────────────────────────────────
+        st.subheader("📅 US Economic Calendar (Upcoming)")
+        if CONFIG.get('FMP_API_KEY'):
+            try:
+                start_date = datetime.date.today()
+                end_date = start_date + datetime.timedelta(days=7)
+                url = (
+                    "https://financialmodelingprep.com/api/v3/economic_calendar"
+                    f"?from={start_date.isoformat()}&to={end_date.isoformat()}&apikey={CONFIG['FMP_API_KEY']}"
+                )
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+
                 if data:
-                    # Filter for US events only and sort by date
-                    us_events = [event for event in data if event.get('country') == 'US']
+                    us_events = [e for e in data if e.get('country') == 'US']
                     us_events.sort(key=lambda x: x.get('date', ''))
-                    
+
                     if us_events:
-                        # Create DataFrame for display
                         calendar_df = pd.DataFrame(us_events)[['date', 'event', 'actual', 'previous', 'change', 'estimate', 'impact']]
                         calendar_df = calendar_df.rename(columns={
-                            'date': 'Date',
+                            'date': 'Date (UTC)',
                             'event': 'Event',
                             'actual': 'Actual',
                             'previous': 'Previous',
@@ -3219,21 +3398,24 @@ with st.expander("Technical Analysis Summary"):
                             'estimate': 'Estimate',
                             'impact': 'Impact'
                         })
-                        
-                        # Convert date to readable format
-                        calendar_df['Date'] = pd.to_datetime(calendar_df['Date']).dt.strftime('%Y-%m-%d %H:%M')
-                        
-                        # Style impact: High=Red, Medium=Orange, Low=Green
-                        def style_impact(val):
-                            color = 'red' if val == 'High' else 'orange' if val == 'Medium' else 'green' if val == 'Low' else 'gray'
-                            return f'color: {color}'
-                        
-                        # Filter out past events if any
-                        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-                        upcoming_events = calendar_df[calendar_df['Date'] > current_time]
-                        
+                        calendar_df['Date (UTC)'] = pd.to_datetime(calendar_df['Date (UTC)']).dt.strftime('%Y-%m-%d %H:%M')
+
+                        current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+                        upcoming_events = calendar_df[calendar_df['Date (UTC)'] > current_time]
+
                         if not upcoming_events.empty:
-                            st.dataframe(upcoming_events.style.applymap(style_impact, subset=['Impact']))
+                            def style_impact(val):
+                                color = 'red' if val == 'High' else 'orange' if val == 'Medium' else 'green' if val == 'Low' else 'gray'
+                                return f'color: {color}; font-weight: bold;'
+
+                            today_str = datetime.datetime.utcnow().strftime('%Y-%m-%d')
+                            def highlight_today(row):
+                                if row['Date (UTC)'].startswith(today_str):
+                                    return ['background-color: #2a2e39'] * len(row)
+                                return [''] * len(row)
+
+                            styled_df = upcoming_events.style.apply(highlight_today, axis=1).applymap(style_impact, subset=['Impact'])
+                            st.dataframe(styled_df, height=300)
                             st.caption(f"✅ {len(upcoming_events)} upcoming US events. Source: Financial Modeling Prep API.")
                         else:
                             st.info("ℹ️ No upcoming US economic events in the next 7 days.")
@@ -3245,6 +3427,7 @@ with st.expander("Technical Analysis Summary"):
                 st.warning(f"⚠️ Error fetching economic calendar: {str(e)}. Check FMP API key or rate limits.")
         else:
             st.warning("⚠️ Add your Financial Modeling Prep (FMP) API key in the sidebar to enable the economic calendar. Get a free key at https://site.financialmodelingprep.com/developer.")
+
 with tab4: # Financials tab
     st.header("💼 Financial Analysis")
     if ticker:
