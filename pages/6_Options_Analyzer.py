@@ -3159,54 +3159,59 @@ with tab3: # News & Analysis tab
             st.error(f"Error fetching news: {str(e)}")
  
         # Market analysis
-        st.subheader("Market Analysis")
-        with st.expander("Technical Analysis Summary"):
-            if 'df' in locals():
-                latest = df.iloc[-1] if not df.empty else None
-                if latest is not None:
-                    col1, col2, col3 = st.columns(3)
-             
-                    with col1:
-                        st.metric("RSI", f"{latest.get('RSI', 'N/A'):.1f}" if not pd.isna(latest.get('RSI')) else "N/A")
-                        st.metric("MACD", f"{latest.get('MACD', 'N/A'):.3f}" if not pd.isna(latest.get('MACD')) else "N/A")
-             
-                    with col2:
-                        st.metric("Trend",
-                                 "Bullish" if latest['Close'] > latest.get('EMA_20', 0) else "Bearish" if latest['Close'] < latest.get('EMA_20', 0) else "Neutral")
-                        st.metric("Volume vs Avg",
-                                 f"{(latest['Volume'] / latest.get('avg_vol', 1)):.1f}x" if not pd.isna(latest.get('avg_vol')) else "N/A")
-             
-                    with col3:
-                        st.metric("Support Levels", len(st.session_state.sr_data.get('5min', {}).get('support', [])))
-                        st.metric("Resistance Levels", len(st.session_state.sr_data.get('5min', {}).get('resistance', [])))
-     
-            # Add market commentary
-            st.info("""
-            **Market Context:**
-            - Monitor VIX for volatility signals
-            - Watch for earnings announcements
-            - Track sector rotation patterns
-            - Follow Fed policy announcements
-            """)
-            # NEW: US Economic Calendar section
-        st.subheader("📅 US Economic Calendar (Today)")
+st.subheader("Market Analysis")
+with st.expander("Technical Analysis Summary"):
+    if 'df' in locals():
+        latest = df.iloc[-1] if not df.empty else None
+        if latest is not None:
+            col1, col2, col3 = st.columns(3)
+         
+            with col1:
+                st.metric("RSI", f"{latest.get('RSI', 'N/A'):.1f}" if not pd.isna(latest.get('RSI')) else "N/A")
+                st.metric("MACD", f"{latest.get('MACD', 'N/A'):.3f}" if not pd.isna(latest.get('MACD')) else "N/A")
+         
+            with col2:
+                st.metric("Trend",
+                         "Bullish" if latest['Close'] > latest.get('EMA_20', 0) else "Bearish" if latest['Close'] < latest.get('EMA_20', 0) else "Neutral")
+                st.metric("Volume vs Avg",
+                         f"{(latest['Volume'] / latest.get('avg_vol', 1)):.1f}x" if not pd.isna(latest.get('avg_vol')) else "N/A")
+         
+            with col3:
+                st.metric("Support Levels", len(st.session_state.sr_data.get('5min', {}).get('support', [])))
+                st.metric("Resistance Levels", len(st.session_state.sr_data.get('5min', {}).get('resistance', [])))
+ 
+        # Add market commentary
+        st.info("""
+        **Market Context:**
+        - Monitor VIX for volatility signals
+        - Watch for earnings announcements
+        - Track sector rotation patterns
+        - Follow Fed policy announcements
+        """)
+        
+        # NEW: US Economic Calendar section - Show upcoming events
+        st.subheader("📅 US Economic Calendar (Upcoming)")
         if CONFIG['FMP_API_KEY']:
             try:
-                today = datetime.date.today().isoformat()
-                url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={today}&to={today}&apikey={CONFIG['FMP_API_KEY']}"
+                # Show events for the next 7 days
+                start_date = datetime.date.today()
+                end_date = start_date + datetime.timedelta(days=7)
+                
+                url = f"https://financialmodelingprep.com/api/v3/economic_calendar?from={start_date.isoformat()}&to={end_date.isoformat()}&apikey={CONFIG['FMP_API_KEY']}"
                 response = requests.get(url, timeout=5)
                 response.raise_for_status()
                 data = response.json()
                 
                 if data:
-                    # Filter for US events only
+                    # Filter for US events only and sort by date
                     us_events = [event for event in data if event.get('country') == 'US']
+                    us_events.sort(key=lambda x: x.get('date', ''))
                     
                     if us_events:
                         # Create DataFrame for display
                         calendar_df = pd.DataFrame(us_events)[['date', 'event', 'actual', 'previous', 'change', 'estimate', 'impact']]
                         calendar_df = calendar_df.rename(columns={
-                            'date': 'Time (UTC)',
+                            'date': 'Date',
                             'event': 'Event',
                             'actual': 'Actual',
                             'previous': 'Previous',
@@ -3214,16 +3219,28 @@ with tab3: # News & Analysis tab
                             'estimate': 'Estimate',
                             'impact': 'Impact'
                         })
+                        
+                        # Convert date to readable format
+                        calendar_df['Date'] = pd.to_datetime(calendar_df['Date']).dt.strftime('%Y-%m-%d %H:%M')
+                        
                         # Style impact: High=Red, Medium=Orange, Low=Green
                         def style_impact(val):
                             color = 'red' if val == 'High' else 'orange' if val == 'Medium' else 'green' if val == 'Low' else 'gray'
                             return f'color: {color}'
-                        st.dataframe(calendar_df.style.applymap(style_impact, subset=['Impact']))
-                        st.caption(f"✅ {len(us_events)} US events today. Source: Financial Modeling Prep API.")
+                        
+                        # Filter out past events if any
+                        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+                        upcoming_events = calendar_df[calendar_df['Date'] > current_time]
+                        
+                        if not upcoming_events.empty:
+                            st.dataframe(upcoming_events.style.applymap(style_impact, subset=['Impact']))
+                            st.caption(f"✅ {len(upcoming_events)} upcoming US events. Source: Financial Modeling Prep API.")
+                        else:
+                            st.info("ℹ️ No upcoming US economic events in the next 7 days.")
                     else:
-                        st.info("ℹ️ No US economic events scheduled for today.")
+                        st.info("ℹ️ No US economic events scheduled for the next 7 days.")
                 else:
-                    st.info("ℹ️ No economic events data available for today.")
+                    st.info("ℹ️ No economic events data available.")
             except Exception as e:
                 st.warning(f"⚠️ Error fetching economic calendar: {str(e)}. Check FMP API key or rate limits.")
         else:
